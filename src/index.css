@@ -23,3 +23,8 @@ body {
     background-color: #ffffff;
   }
 }
+
+/* Hide Grammarly extension */
+grammarly-extension {
+  display: none !important;
+}

@@ -35,6 +35,12 @@ const setTwoslashData = StateEffect.define<TwoslashData>();
 // State effect for updating theme in decorations
 const updateTooltipTheme = StateEffect.define<BundledTheme>();
 
+// State effect for disabling TwoSlash and clearing data
+const disableTwoslash = StateEffect.define<void>();
+
+// State effect for re-enabling TwoSlash and triggering analysis
+const enableTwoslash = StateEffect.define<void>();
+
 // State field to store current theme
 const currentThemeField = StateField.define<BundledTheme>({
   create() {
@@ -70,6 +76,14 @@ const twoslashDataField = StateField.define<TwoslashData>({
     for (const effect of tr.effects) {
       if (effect.is(setTwoslashData)) {
         return effect.value;
+      }
+      if (effect.is(disableTwoslash)) {
+        return {
+          hovers: new Map(),
+          errors: new Map(),
+          queries: new Map(),
+          completions: new Map(),
+        };
       }
     }
     return value;
@@ -112,6 +126,15 @@ const createQueryTooltipsField = (
         if (effect.is(setTwoslashData)) {
           data = effect.value;
           shouldRebuild = true;
+        }
+        if (effect.is(disableTwoslash)) {
+          shouldRebuild = true;
+          data = {
+            hovers: new Map(),
+            errors: new Map(),
+            queries: new Map(),
+            completions: new Map(),
+          };
         }
       }
 
@@ -262,12 +285,14 @@ class TwoslashTooltipView {
   private highlighter: ShikiHighlighter;
   private language: BundledLanguage;
   private theme: BundledTheme;
+  private config: TwoslashTooltipConfig;
   private updateTimeout: number | null = null;
   private lastContent: string = '';
   decorations: DecorationSet = Decoration.none;
 
   constructor(view: EditorView, config: TwoslashTooltipConfig) {
     this.view = view;
+    this.config = config;
     this.highlighter = config.highlighter || new ShikiHighlighter();
     this.language = config.language || 'typescript';
     this.theme = config.theme || 'github-light';
@@ -298,6 +323,11 @@ class TwoslashTooltipView {
             });
           }
         }
+        if (effect.is(enableTwoslash)) {
+          // Force re-analysis when TwoSlash is re-enabled
+          this.lastContent = ''; // Force re-analysis
+          this.scheduleUpdate();
+        }
       }
     }
 
@@ -311,11 +341,12 @@ class TwoslashTooltipView {
       clearTimeout(this.updateTimeout);
     }
 
-    // Debounce updates for performance
+    // Debounce updates for performance with configurable delay
+    const delay = this.config?.delay || 300;
     this.updateTimeout = window.setTimeout(() => {
       this.updateTwoslashData();
       this.updateTimeout = null;
-    }, 500);
+    }, delay);
   }
 
   private async updateTwoslashData() {
@@ -329,6 +360,16 @@ class TwoslashTooltipView {
     this.lastContent = content;
 
     if (!content) {
+      // Clear TwoSlash data when content is empty
+      const emptyData: TwoslashData = {
+        hovers: new Map(),
+        errors: new Map(),
+        queries: new Map(),
+        completions: new Map(),
+      };
+      this.view.dispatch({
+        effects: setTwoslashData.of(emptyData),
+      });
       return;
     }
 
@@ -549,12 +590,20 @@ const errorUnderlineField = StateField.define<DecorationSet>({
 
         return builder.finish();
       }
+      if (effect.is(disableTwoslash)) {
+        // Clear all decorations when TwoSlash is disabled
+        return Decoration.none;
+      }
     }
 
     return decorations.map(tr.changes);
   },
   provide: (f) => EditorView.decorations.from(f),
 });
+
+// Export the disable and enable effects for external use
+export const clearTwoslashData = disableTwoslash;
+export const enableTwoslashData = enableTwoslash;
 
 // Main plugin export
 export function twoslashTooltipPlugin(

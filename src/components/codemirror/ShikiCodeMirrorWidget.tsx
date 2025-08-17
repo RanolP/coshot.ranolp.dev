@@ -7,7 +7,7 @@ import { lintGutter } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
-import { twoslashTooltipPlugin } from './TwoslashTooltipPlugin';
+import { twoslashTooltipPlugin, clearTwoslashData, enableTwoslashData } from './TwoslashTooltipPlugin';
 import { ShikiHighlighter } from './ShikiHighlighter';
 
 interface ShikiCodeMirrorWidgetProps {
@@ -27,7 +27,10 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
 ) => {
   let editorRef: HTMLDivElement | undefined;
   let highlighterInstance: ShikiHighlighter | undefined;
-  const [editorView, setEditorView] = createSignal<EditorView | undefined>(undefined);
+  let previousTwoslashEnabled = false;
+  const [editorView, setEditorView] = createSignal<EditorView | undefined>(
+    undefined,
+  );
   const [isReady, setIsReady] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(true);
 
@@ -150,7 +153,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           highlighter: highlighterInstance,
           language: props.language,
           theme: props.theme,
-          delay: 300,
+          delay: 150,
         });
         extensions.push(...twoslashExtensions);
       }
@@ -221,6 +224,32 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         effects: updateShikiConfig.of({ language: props.language }),
       });
     }
+  });
+
+  // Track TwoSlash state changes and clear data when disabled
+  createEffect(() => {
+    const view = editorView();
+    const isTwoslashEnabled = Boolean(
+      props.enableTwoslash &&
+      props.language &&
+      ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language)
+    );
+
+    if (view) {
+      if (previousTwoslashEnabled && !isTwoslashEnabled) {
+        // TwoSlash was enabled but now disabled, clear all data
+        view.dispatch({
+          effects: clearTwoslashData.of(undefined),
+        });
+      } else if (!previousTwoslashEnabled && isTwoslashEnabled) {
+        // TwoSlash was disabled but now enabled, trigger re-analysis
+        view.dispatch({
+          effects: enableTwoslashData.of(undefined),
+        });
+      }
+    }
+
+    previousTwoslashEnabled = isTwoslashEnabled;
   });
 
   return (

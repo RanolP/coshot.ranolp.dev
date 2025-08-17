@@ -157,7 +157,7 @@ export class ShikiHighlighter {
     await this.twoslashInstance.prepareTypes(code);
 
     // Then run synchronously which might handle errors better
-    let twoslashResult;
+    let twoslashResult: TwoslashShikiReturn;
     try {
       twoslashResult = this.twoslashInstance.runSync(code, ext, {
         handbookOptions: {
@@ -166,11 +166,31 @@ export class ShikiHighlighter {
           keepNotations: true,
         },
       });
+      console.log(twoslashResult);
     } catch (error: any) {
       // If there's an error, try to continue anyway with what we have
       // TwoSlash sometimes throws even when it has useful data
+      let match: RegExpExecArray | null;
       if (error.twoslashResults) {
         twoslashResult = error.twoslashResults;
+      } else if (
+        error.description &&
+        (match = /The request on line (\d+)/.exec(error.description))
+      ) {
+        const lines = code.split('\n');
+        twoslashResult = {
+          nodes: [
+            {
+              type: 'error',
+              code: ': Twoslash Error',
+              text: error.description,
+              line: parseInt(match[1]),
+              start: lines.slice(0, parseInt(match[1]) - 1).join('\n').length,
+              length: lines[parseInt(match[1]) - 1].length + 1,
+              character: 0,
+            },
+          ],
+        };
       } else {
         // Fall back to regular highlighting
         const lines = await this.tokenize(code, lang, selectedTheme);
