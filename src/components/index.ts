@@ -4,6 +4,10 @@ export { default as CodeMirrorDemo } from './CodeMirrorDemo';
 export { default as CodeMirrorUsage } from './CodeMirrorUsage';
 export { default as SimpleCodeMirrorExample } from './SimpleCodeMirrorExample';
 
+// Shiki CodeMirror Components
+export { default as ShikiCodeMirrorWidget } from './codemirror/ShikiCodeMirrorWidget';
+export { default as ShikiCodeMirrorDemo } from './ShikiCodeMirrorDemo';
+
 // Re-export types for convenience
 export type CodeMirrorLanguage = 'javascript' | 'html' | 'css' | 'jsx' | 'tsx';
 export type CodeMirrorTheme = 'light' | 'dark';

@@ -1,9 +1,11 @@
 import { createSignal } from 'solid-js';
 import CodeMirrorDemo from './components/CodeMirrorDemo';
+import ShikiCodeMirrorDemo from './components/ShikiCodeMirrorDemo';
 
 function App() {
   const [count, setCount] = createSignal(0);
   const [showCodeMirror, setShowCodeMirror] = createSignal(false);
+  const [showShikiCodeMirror, setShowShikiCodeMirror] = createSignal(false);
 
   return (
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
@@ -116,6 +118,13 @@ function App() {
                 <div class="i-carbon-code w-4 h-4 mr-2" />
                 {showCodeMirror() ? 'Hide' : 'Show'} CodeMirror
               </button>
+              <button
+                onClick={() => setShowShikiCodeMirror(!showShikiCodeMirror())}
+                class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 flex items-center"
+              >
+                <div class="i-carbon-terminal w-4 h-4 mr-2" />
+                {showShikiCodeMirror() ? 'Hide' : 'Show'} Shiki Editor
+              </button>
             </div>
             <p class="text-gray-400">
               Try clicking the buttons above to see reactive updates in action!
@@ -126,6 +135,13 @@ function App() {
           {showCodeMirror() && (
             <div class="mt-8">
               <CodeMirrorDemo />
+            </div>
+          )}
+          
+          {/* Shiki CodeMirror Demo */}
+          {showShikiCodeMirror() && (
+            <div class="mt-8">
+              <ShikiCodeMirrorDemo />
             </div>
           )}
         </div>
