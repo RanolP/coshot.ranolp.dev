@@ -1,6 +1,8 @@
 import type { Component } from 'solid-js';
-import { createSignal } from 'solid-js';
+import { createSignal, createEffect } from 'solid-js';
+import type { BundledTheme } from 'shiki';
 import ShikiCodeMirrorWidget from './codemirror/ShikiCodeMirrorWidget';
+import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
 
 const ShikiCodeMirrorDemo: Component = () => {
   const [code, setCode] = createSignal(`// TypeScript example with TwoSlash support
@@ -38,9 +40,43 @@ const userEmail = user.email;
 // greetUser({ id: "not-a-number", name: "Bob" });
 `);
 
-  const [theme, setTheme] = createSignal<'github-light' | 'github-dark'>('github-light');
+  const [theme, setTheme] = createSignal<BundledTheme>('github-light');
   const [language, setLanguage] = createSignal<'typescript' | 'javascript' | 'tsx' | 'jsx' | 'css' | 'html'>('typescript');
   const [enableTwoslash, setEnableTwoslash] = createSignal(true);
+  const [themeColors, setThemeColors] = createSignal<{bg: string; fg: string; border: string}>({
+    bg: '#ffffff',
+    fg: '#000000', 
+    border: '#e1e4e8'
+  });
+
+  let highlighterInstance: ShikiHighlighter | undefined;
+
+  // Initialize highlighter and update theme colors
+  const initializeHighlighter = async () => {
+    if (!highlighterInstance) {
+      highlighterInstance = new ShikiHighlighter({
+        themes: ['github-light', 'github-dark', theme()],
+        langs: ['javascript', 'typescript'],
+      });
+      await highlighterInstance.initialize();
+    }
+    
+    if (highlighterInstance.isInitialized()) {
+      const colors = highlighterInstance.getThemeColors(theme());
+      setThemeColors(colors);
+    }
+  };
+
+  // Update theme colors when theme changes
+  createEffect(() => {
+    const currentTheme = theme();
+    if (highlighterInstance && highlighterInstance.isInitialized()) {
+      const colors = highlighterInstance.getThemeColors(currentTheme);
+      setThemeColors(colors);
+    } else {
+      initializeHighlighter();
+    }
+  });
 
   const exampleCode = {
     typescript: `// TypeScript example with TwoSlash support
@@ -189,15 +225,75 @@ export default Counter;`,
           <label style={{ 'margin-right': '10px' }}>Theme:</label>
           <select
             value={theme()}
-            onChange={(e) => setTheme(e.target.value as 'github-light' | 'github-dark')}
+            onChange={(e) => setTheme(e.target.value as BundledTheme)}
             style={{
               padding: '4px 8px',
               'border-radius': '4px',
               border: '1px solid #ccc',
             }}
           >
-            <option value="github-light">GitHub Light</option>
+            <option value="github-light">GitHub Light (Default)</option>
             <option value="github-dark">GitHub Dark</option>
+            <option disabled>--- Dark Themes ---</option>
+            <option value="andromeeda">Andromeeda</option>
+            <option value="ayu-dark">Ayu Dark</option>
+            <option value="catppuccin-frappe">Catppuccin Frappé</option>
+            <option value="catppuccin-macchiato">Catppuccin Macchiato</option>
+            <option value="catppuccin-mocha">Catppuccin Mocha</option>
+            <option value="dark-plus">Dark Plus</option>
+            <option value="dracula">Dracula</option>
+            <option value="dracula-soft">Dracula Soft</option>
+            <option value="everforest-dark">Everforest Dark</option>
+            <option value="github-dark-default">GitHub Dark Default</option>
+            <option value="github-dark-dimmed">GitHub Dark Dimmed</option>
+            <option value="github-dark-high-contrast">GitHub Dark High Contrast</option>
+            <option value="gruvbox-dark-hard">Gruvbox Dark Hard</option>
+            <option value="gruvbox-dark-medium">Gruvbox Dark Medium</option>
+            <option value="gruvbox-dark-soft">Gruvbox Dark Soft</option>
+            <option value="houston">Houston</option>
+            <option value="kanagawa-dragon">Kanagawa Dragon</option>
+            <option value="kanagawa-wave">Kanagawa Wave</option>
+            <option value="laserwave">Laserwave</option>
+            <option value="material-theme">Material Theme</option>
+            <option value="material-theme-darker">Material Theme Darker</option>
+            <option value="material-theme-ocean">Material Theme Ocean</option>
+            <option value="material-theme-palenight">Material Theme Palenight</option>
+            <option value="min-dark">Min Dark</option>
+            <option value="monokai">Monokai</option>
+            <option value="night-owl">Night Owl</option>
+            <option value="nord">Nord</option>
+            <option value="one-dark-pro">One Dark Pro</option>
+            <option value="plastic">Plastic</option>
+            <option value="poimandres">Poimandres</option>
+            <option value="red">Red</option>
+            <option value="rose-pine">Rose Pine</option>
+            <option value="rose-pine-moon">Rose Pine Moon</option>
+            <option value="slack-dark">Slack Dark</option>
+            <option value="slack-ochin">Slack Ochin</option>
+            <option value="solarized-dark">Solarized Dark</option>
+            <option value="synthwave-84">Synthwave '84</option>
+            <option value="tokyo-night">Tokyo Night</option>
+            <option value="vesper">Vesper</option>
+            <option value="vitesse-black">Vitesse Black</option>
+            <option value="vitesse-dark">Vitesse Dark</option>
+            <option disabled>--- Light Themes ---</option>
+            <option value="aurora-x">Aurora X</option>
+            <option value="catppuccin-latte">Catppuccin Latte</option>
+            <option value="everforest-light">Everforest Light</option>
+            <option value="github-light-default">GitHub Light Default</option>
+            <option value="github-light-high-contrast">GitHub Light High Contrast</option>
+            <option value="gruvbox-light-hard">Gruvbox Light Hard</option>
+            <option value="gruvbox-light-medium">Gruvbox Light Medium</option>
+            <option value="gruvbox-light-soft">Gruvbox Light Soft</option>
+            <option value="kanagawa-lotus">Kanagawa Lotus</option>
+            <option value="light-plus">Light Plus</option>
+            <option value="material-theme-lighter">Material Theme Lighter</option>
+            <option value="min-light">Min Light</option>
+            <option value="one-light">One Light</option>
+            <option value="rose-pine-dawn">Rose Pine Dawn</option>
+            <option value="snazzy-light">Snazzy Light</option>
+            <option value="solarized-light">Solarized Light</option>
+            <option value="vitesse-light">Vitesse Light</option>
           </select>
         </div>
         
@@ -245,21 +341,23 @@ export default Counter;`,
           theme={theme()}
           height="500px"
           onChange={setCode}
+          onThemeChange={setTheme}
           enableTwoslash={enableTwoslash()}
+          showThemeSelector={true}
         />
       </div>
 
       <div style={{ 
         padding: '15px',
-        background: theme() === 'github-dark' ? '#1e1e1e' : '#f8f9fa',
+        background: themeColors().bg,
         'border-radius': '8px',
-        border: `1px solid ${theme() === 'github-dark' ? '#404040' : '#e9ecef'}`,
-        color: theme() === 'github-dark' ? '#d4d4d4' : '#333',
+        border: `1px solid ${themeColors().border}`,
+        color: themeColors().fg,
       }}>
         <h3>Features:</h3>
         <ul>
           <li>✨ Syntax highlighting powered by Shiki</li>
-          <li>🎨 Multiple theme support (GitHub Light/Dark)</li>
+          <li>🎨 Multiple theme support (60+ themes including GitHub, Dracula, Monokai, etc.)</li>
           <li>📝 Support for TypeScript, JavaScript, TSX, JSX, CSS, and HTML</li>
           <li>🔍 TwoSlash integration for TypeScript/JavaScript (hover for type info)</li>
           <li>🚨 Error highlighting with TwoSlash</li>

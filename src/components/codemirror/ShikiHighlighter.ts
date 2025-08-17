@@ -179,6 +179,7 @@ export class ShikiHighlighter {
       ) {
         const lines = code.split('\n');
         twoslashResult = {
+          code,
           nodes: [
             {
               type: 'error',
@@ -239,6 +240,64 @@ export class ShikiHighlighter {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Extract theme colors including background, foreground, and other UI colors
+   */
+  getThemeColors(themeName: BundledTheme): { bg: string; fg: string; border: string } {
+    if (!this.highlighter) {
+      return { bg: '#ffffff', fg: '#000000', border: '#e1e4e8' };
+    }
+
+    try {
+      const theme = this.highlighter.getTheme(themeName);
+      const bg = theme.bg || '#ffffff';
+      const fg = theme.fg || '#000000';
+      
+      // Calculate border color based on background
+      const isDark = this.isColorDark(bg);
+      const border = isDark ? this.lightenColor(bg, 0.2) : this.darkenColor(bg, 0.1);
+      
+      return { bg, fg, border };
+    } catch (error) {
+      console.warn('Failed to get theme colors:', error);
+      return { bg: '#ffffff', fg: '#000000', border: '#e1e4e8' };
+    }
+  }
+
+  /**
+   * Check if a color is dark
+   */
+  isColorDark(color: string): boolean {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
+  }
+
+  /**
+   * Lighten a color by a percentage
+   */
+  private lightenColor(color: string, percent: number): string {
+    const hex = color.replace('#', '');
+    const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + Math.round(255 * percent));
+    const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + Math.round(255 * percent));
+    const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + Math.round(255 * percent));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
+  /**
+   * Darken a color by a percentage
+   */
+  private darkenColor(color: string, percent: number): string {
+    const hex = color.replace('#', '');
+    const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - Math.round(255 * percent));
+    const g = Math.max(0, parseInt(hex.substring(2, 4), 16) - Math.round(255 * percent));
+    const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - Math.round(255 * percent));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 
   async dispose(): Promise<void> {

@@ -191,11 +191,24 @@ function createQueryTooltipDOM(
   theme?: BundledTheme,
 ): HTMLElement {
   // Determine colors based on theme
-  const isDark = theme && theme.includes('dark');
-  const bgColor = isDark ? '#1e1e1e' : '#ffffff';
-  const borderColor = isDark ? '#454545' : '#d1d5db';
-  const textColor = isDark ? '#d4d4d4' : '#1f2937';
-  const shadowColor = isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
+  let bgColor = '#ffffff';
+  let borderColor = '#d1d5db';
+  let textColor = '#1f2937';
+  
+  if (highlighter && highlighter.isInitialized() && theme) {
+    const colors = highlighter.getThemeColors(theme);
+    bgColor = colors.bg;
+    borderColor = colors.border;
+    textColor = colors.fg;
+  } else {
+    // Fallback to simple dark/light detection
+    const isDark = theme && theme.includes('dark');
+    bgColor = isDark ? '#1e1e1e' : '#ffffff';
+    borderColor = isDark ? '#454545' : '#d1d5db';
+    textColor = isDark ? '#d4d4d4' : '#1f2937';
+  }
+  
+  const shadowColor = highlighter?.isColorDark(bgColor) ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
 
   const container = document.createElement('div');
   container.className = 'cm-twoslash-query-tooltip';
@@ -240,7 +253,7 @@ function createQueryTooltipDOM(
   if (docs) {
     const docsDiv = document.createElement('div');
     docsDiv.textContent = docs;
-    const docsColor = isDark ? '#9cdcfe' : '#0969da';
+    const docsColor = highlighter?.isColorDark(bgColor) ? '#9cdcfe' : '#0969da';
     docsDiv.style.cssText = `
       margin-top: 6px;
       padding-top: 6px;
@@ -502,10 +515,22 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
           dom.innerHTML = content;
 
           // Determine colors based on theme
-          const isDark = currentTheme && currentTheme.includes('dark');
-          const bgColor = isDark ? '#1e1e1e' : '#ffffff';
-          const borderColor = isDark ? '#454545' : '#d1d5db';
-          const textColor = isDark ? '#d4d4d4' : '#1f2937';
+          let bgColor = '#ffffff';
+          let borderColor = '#d1d5db';
+          let textColor = '#1f2937';
+          
+          if (config.highlighter && config.highlighter.isInitialized() && currentTheme) {
+            const colors = config.highlighter.getThemeColors(currentTheme);
+            bgColor = colors.bg;
+            borderColor = colors.border;
+            textColor = colors.fg;
+          } else {
+            // Fallback to simple dark/light detection
+            const isDark = currentTheme && currentTheme.includes('dark');
+            bgColor = isDark ? '#1e1e1e' : '#ffffff';
+            borderColor = isDark ? '#454545' : '#d1d5db';
+            textColor = isDark ? '#d4d4d4' : '#1f2937';
+          }
 
           // Apply styles
           dom.style.padding = '8px 12px';
@@ -601,6 +626,50 @@ const errorUnderlineField = StateField.define<DecorationSet>({
   provide: (f) => EditorView.decorations.from(f),
 });
 
+// Function to update tooltip arrow styles based on theme
+function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighlighter) {
+  let borderColor = '#d1d5db';
+  let bgColor = '#ffffff';
+  
+  if (highlighter && highlighter.isInitialized()) {
+    const colors = highlighter.getThemeColors(theme);
+    borderColor = colors.border;
+    bgColor = colors.bg;
+  } else {
+    // Fallback to simple dark/light detection
+    const isDark = theme && theme.includes('dark');
+    borderColor = isDark ? '#454545' : '#d1d5db';
+    bgColor = isDark ? '#1e1e1e' : '#ffffff';
+  }
+  
+  // Remove existing style element if it exists
+  const existingStyle = document.getElementById('twoslash-tooltip-arrow-styles');
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+  
+  // Create new style element with theme-appropriate arrow colors
+  const style = document.createElement('style');
+  style.id = 'twoslash-tooltip-arrow-styles';
+  style.textContent = `
+    .cm-tooltip-arrow:before {
+      border-top-color: ${borderColor} !important;
+    }
+    .cm-tooltip-arrow:after {
+      border-top-color: ${bgColor} !important;
+    }
+    .cm-tooltip.cm-tooltip-below .cm-tooltip-arrow:before {
+      border-bottom-color: ${borderColor} !important;
+      border-top-color: transparent !important;
+    }
+    .cm-tooltip.cm-tooltip-below .cm-tooltip-arrow:after {
+      border-bottom-color: ${bgColor} !important;
+      border-top-color: transparent !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Export the disable and enable effects for external use
 export const clearTwoslashData = disableTwoslash;
 export const enableTwoslashData = enableTwoslash;
@@ -614,6 +683,11 @@ export function twoslashTooltipPlugin(
     config.language,
     config.theme,
   );
+
+  // Initialize arrow styles with the current theme
+  if (config.theme) {
+    updateTooltipArrowStyles(config.theme, config.highlighter);
+  }
 
   return [
     twoslashDataField,
@@ -631,6 +705,26 @@ export function twoslashTooltipPlugin(
       },
       '.cm-twoslash-type-content': {
         fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+      },
+    }),
+    // Add dynamic theme-based tooltip arrow styles
+    StateField.define({
+      create() {
+        return null;
+      },
+      update(value, tr) {
+        // Listen for theme changes and update arrow styles
+        for (const effect of tr.effects) {
+          if (effect.is(updateTooltipTheme) || effect.is(updateShikiConfig)) {
+            const theme = effect.is(updateTooltipTheme) 
+              ? effect.value 
+              : effect.value.theme;
+            if (theme) {
+              updateTooltipArrowStyles(theme, config.highlighter);
+            }
+          }
+        }
+        return value;
       },
     }),
   ];

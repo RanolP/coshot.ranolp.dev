@@ -10,16 +10,82 @@ import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
 import { twoslashTooltipPlugin, clearTwoslashData, enableTwoslashData } from './TwoslashTooltipPlugin';
 import { ShikiHighlighter } from './ShikiHighlighter';
 
+// All available Shiki themes
+const AVAILABLE_THEMES: BundledTheme[] = [
+  'andromeeda',
+  'aurora-x',
+  'ayu-dark',
+  'catppuccin-frappe',
+  'catppuccin-latte',
+  'catppuccin-macchiato',
+  'catppuccin-mocha',
+  'dark-plus',
+  'dracula',
+  'dracula-soft',
+  'everforest-dark',
+  'everforest-light',
+  'github-dark',
+  'github-dark-default',
+  'github-dark-dimmed',
+  'github-dark-high-contrast',
+  'github-light',
+  'github-light-default',
+  'github-light-high-contrast',
+  'gruvbox-dark-hard',
+  'gruvbox-dark-medium',
+  'gruvbox-dark-soft',
+  'gruvbox-light-hard',
+  'gruvbox-light-medium',
+  'gruvbox-light-soft',
+  'houston',
+  'kanagawa-dragon',
+  'kanagawa-lotus',
+  'kanagawa-wave',
+  'laserwave',
+  'light-plus',
+  'material-theme',
+  'material-theme-darker',
+  'material-theme-lighter',
+  'material-theme-ocean',
+  'material-theme-palenight',
+  'min-dark',
+  'min-light',
+  'monokai',
+  'night-owl',
+  'nord',
+  'one-dark-pro',
+  'one-light',
+  'plastic',
+  'poimandres',
+  'red',
+  'rose-pine',
+  'rose-pine-dawn',
+  'rose-pine-moon',
+  'slack-dark',
+  'slack-ochin',
+  'snazzy-light',
+  'solarized-dark',
+  'solarized-light',
+  'synthwave-84',
+  'tokyo-night',
+  'vesper',
+  'vitesse-black',
+  'vitesse-dark',
+  'vitesse-light',
+];
+
 interface ShikiCodeMirrorWidgetProps {
   value?: string;
   language?: BundledLanguage;
   theme?: BundledTheme;
   height?: string;
   onChange?: (value: string) => void;
+  onThemeChange?: (theme: BundledTheme) => void;
   readOnly?: boolean;
   placeholder?: string;
   className?: string;
   enableTwoslash?: boolean;
+  showThemeSelector?: boolean;
 }
 
 const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
@@ -33,6 +99,95 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   );
   const [isReady, setIsReady] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(true);
+  const [themeColors, setThemeColors] = createSignal<{bg: string; fg: string; border: string}>({
+    bg: '#ffffff',
+    fg: '#000000', 
+    border: '#e1e4e8'
+  });
+
+  const updateThemeColors = () => {
+    if (highlighterInstance && highlighterInstance.isInitialized() && props.theme) {
+      const colors = highlighterInstance.getThemeColors(props.theme);
+      setThemeColors(colors);
+    }
+  };
+
+  const createThemeExtension = () => {
+    const colors = themeColors();
+    return EditorView.theme({
+      '&': {
+        fontSize: '14px',
+        fontFamily:
+          'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+      },
+      '.cm-editor': {
+        height: props.height || '400px',
+        borderRadius: '8px',
+        overflow: 'hidden',
+      },
+      '.cm-scroller': {
+        fontFamily:
+          'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+      },
+      '.cm-content': {
+        padding: '12px',
+      },
+      '.cm-line': {
+        lineHeight: '1.6',
+      },
+      '.cm-tooltip': {
+        backgroundColor: colors.bg,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '6px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+      '.cm-tooltip.cm-tooltip-autocomplete': {
+        '& > ul': {
+          maxHeight: '200px',
+          overflowY: 'auto',
+        },
+        '& > ul > li': {
+          padding: '4px 8px',
+          cursor: 'pointer',
+        },
+        '& > ul > li[aria-selected]': {
+          backgroundColor:
+            props.theme === 'github-dark' ? '#264f78' : '#007bff',
+          color: '#fff',
+        },
+      },
+      '.cm-searchMatch': {
+        backgroundColor:
+          props.theme === 'github-dark' ? '#ffd700' : '#ffeb3b',
+        color: '#000',
+      },
+      '.cm-searchMatch.cm-searchMatch-selected': {
+        backgroundColor:
+          props.theme === 'github-dark' ? '#ff6b6b' : '#ff5722',
+        color: '#fff',
+      },
+      // Shiki token styles
+      '.shiki-token': {
+        transition: 'color 0.1s',
+      },
+      // TwoSlash error styles
+      '.cm-twoslash-error': {
+        textDecoration: 'underline wavy #f14c4c',
+        textUnderlineOffset: '3px',
+      },
+      // TwoSlash tooltip styles
+      '.cm-twoslash-tooltip': {
+        padding: '8px 12px',
+        borderRadius: '6px',
+        backgroundColor: colors.bg,
+        color: colors.fg,
+        border: `1px solid ${colors.border}`,
+        fontSize: '13px',
+        maxWidth: '500px',
+        lineHeight: '1.4',
+      },
+    });
+  };
 
   const createEditor = async () => {
     if (!editorRef) return;
@@ -42,92 +197,20 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
     try {
       // Create and initialize shared highlighter instance
       highlighterInstance = new ShikiHighlighter({
-        themes: ['github-light', 'github-dark'],
+        themes: AVAILABLE_THEMES,
         langs: ['javascript', 'typescript', 'tsx', 'jsx', 'css', 'html'],
       });
       await highlighterInstance.initialize();
+      
+      // Update theme colors after initialization
+      updateThemeColors();
+      
       const extensions: Extension[] = [
         basicSetup,
         autocompletion(),
         search(),
         lintGutter(),
-        EditorView.theme({
-          '&': {
-            fontSize: '14px',
-            fontFamily:
-              'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-          },
-          '.cm-editor': {
-            height: props.height || '400px',
-            borderRadius: '8px',
-            overflow: 'hidden',
-          },
-          '.cm-scroller': {
-            fontFamily:
-              'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-          },
-          '.cm-content': {
-            padding: '12px',
-          },
-          '.cm-line': {
-            lineHeight: '1.6',
-          },
-          '.cm-tooltip': {
-            backgroundColor: props.theme === 'github-dark' ? '#2d2d2d' : '#fff',
-            border: `1px solid ${
-              props.theme === 'github-dark' ? '#404040' : '#e9ecef'
-            }`,
-            borderRadius: '6px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          },
-          '.cm-tooltip.cm-tooltip-autocomplete': {
-            '& > ul': {
-              maxHeight: '200px',
-              overflowY: 'auto',
-            },
-            '& > ul > li': {
-              padding: '4px 8px',
-              cursor: 'pointer',
-            },
-            '& > ul > li[aria-selected]': {
-              backgroundColor:
-                props.theme === 'github-dark' ? '#264f78' : '#007bff',
-              color: '#fff',
-            },
-          },
-          '.cm-searchMatch': {
-            backgroundColor:
-              props.theme === 'github-dark' ? '#ffd700' : '#ffeb3b',
-            color: '#000',
-          },
-          '.cm-searchMatch.cm-searchMatch-selected': {
-            backgroundColor:
-              props.theme === 'github-dark' ? '#ff6b6b' : '#ff5722',
-            color: '#fff',
-          },
-          // Shiki token styles
-          '.shiki-token': {
-            transition: 'color 0.1s',
-          },
-          // TwoSlash error styles
-          '.cm-twoslash-error': {
-            textDecoration: 'underline wavy #f14c4c',
-            textUnderlineOffset: '3px',
-          },
-          // TwoSlash tooltip styles
-          '.cm-twoslash-tooltip': {
-            padding: '8px 12px',
-            borderRadius: '6px',
-            backgroundColor: props.theme === 'github-dark' ? '#1e1e1e' : '#fff',
-            color: props.theme === 'github-dark' ? '#d4d4d4' : '#333',
-            border: `1px solid ${
-              props.theme === 'github-dark' ? '#454545' : '#e9ecef'
-            }`,
-            fontSize: '13px',
-            maxWidth: '500px',
-            lineHeight: '1.4',
-          },
-        }),
+        createThemeExtension(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged && props.onChange) {
             props.onChange(update.state.doc.toString());
@@ -213,6 +296,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       view.dispatch({
         effects: updateShikiConfig.of({ theme: props.theme }),
       });
+      // Update theme colors when theme changes
+      updateThemeColors();
     }
   });
 
@@ -261,7 +346,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            color: props.theme === 'github-dark' ? '#858585' : '#6c757d',
+            color: themeColors().fg,
             'font-size': '14px',
           }}
         >
@@ -274,9 +359,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         style={{
           'border-radius': '8px',
           overflow: 'hidden',
-          border: `1px solid ${
-            props.theme === 'github-dark' ? '#404040' : '#e9ecef'
-          }`,
+          border: `1px solid ${themeColors().border}`,
           opacity: isLoading() ? '0.5' : '1',
           transition: 'opacity 0.3s',
         }}
@@ -288,17 +371,39 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             display: 'flex',
             gap: '8px',
             padding: '8px',
-            background: props.theme === 'github-dark' ? '#1e1e1e' : '#f8f9fa',
-            'border-top': `1px solid ${
-              props.theme === 'github-dark' ? '#404040' : '#e9ecef'
-            }`,
+            background: themeColors().bg,
+            'border-top': `1px solid ${themeColors().border}`,
             'border-radius': '0 0 8px 8px',
             'margin-top': '-1px',
           }}
         >
+          {props.showThemeSelector && (
+            <select
+              value={props.theme || 'github-light'}
+              onChange={(e) => {
+                const newTheme = e.target.value as BundledTheme;
+                props.onThemeChange?.(newTheme);
+              }}
+              style={{
+                padding: '4px 8px',
+                'border-radius': '4px',
+                border: `1px solid ${themeColors().border}`,
+                background: themeColors().bg,
+                color: themeColors().fg,
+                'font-size': '12px',
+                cursor: 'pointer',
+              }}
+            >
+              {AVAILABLE_THEMES.map((theme) => (
+                <option value={theme}>
+                  {theme.charAt(0).toUpperCase() + theme.slice(1).replace(/-/g, ' ')}
+                </option>
+              ))}
+            </select>
+          )}
           <span
             style={{
-              color: props.theme === 'github-dark' ? '#858585' : '#6c757d',
+              color: themeColors().fg,
               'font-size': '12px',
               'margin-left': 'auto',
               display: 'flex',
