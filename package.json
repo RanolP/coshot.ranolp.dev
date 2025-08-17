@@ -29,6 +29,7 @@
     "twoslash-cdn": "^0.3.4"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.62",
     "@unocss/preset-attributify": "^66.4.2",
     "@unocss/preset-icons": "^66.4.2",
     "@unocss/preset-uno": "^66.4.2",

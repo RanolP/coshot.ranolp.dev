@@ -10,19 +10,16 @@ const TopBar: Component = () => {
       <div class="top-bar">
         <div class="top-bar-content">
           <h1 class="logo">Coshot</h1>
-          <button 
+          <button
             class="help-button"
             onClick={() => setShowModal(true)}
             title="Features & TwoSlash Tips"
           >
-            ?
+            <div class="i-lucide:help-circle" />
           </button>
         </div>
       </div>
-      <FeaturesModal 
-        isOpen={showModal()} 
-        onClose={() => setShowModal(false)} 
-      />
+      <FeaturesModal isOpen={showModal()} onClose={() => setShowModal(false)} />
     </>
   );
 };

@@ -19,7 +19,9 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
         <div class="modal-content">
           <div class="modal-header">
             <h2>Features & TwoSlash Tips</h2>
-            <button class="close-button" onClick={props.onClose}>×</button>
+            <button class="close-button" onClick={props.onClose}>
+              <div class="i-lucide:x" />
+            </button>
           </div>
           <div class="modal-body">
             <div class="features-section">

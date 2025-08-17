@@ -3,6 +3,7 @@ import { createSignal, createEffect } from 'solid-js';
 import type { BundledTheme } from 'shiki';
 import ShikiCodeMirrorWidget from './codemirror/ShikiCodeMirrorWidget';
 import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
+import SearchableThemeSelector from './SearchableThemeSelector';
 
 const FullScreenEditor: Component = () => {
   const [code, setCode] = createSignal(`// Welcome to Coshot - TypeScript playground with TwoSlash support
@@ -56,22 +57,10 @@ const userId = user.id;
   return (
     <div class="fullscreen-editor">
       <div class="editor-controls">
-        <select
+        <SearchableThemeSelector
           value={theme()}
-          onChange={(e) => setTheme(e.target.value as BundledTheme)}
-          class="control-select"
-        >
-          <option value="github-dark">GitHub Dark</option>
-          <option value="github-light">GitHub Light</option>
-          <option value="dracula">Dracula</option>
-          <option value="monokai">Monokai</option>
-          <option value="one-dark-pro">One Dark Pro</option>
-          <option value="nord">Nord</option>
-          <option value="tokyo-night">Tokyo Night</option>
-          <option value="catppuccin-mocha">Catppuccin Mocha</option>
-          <option value="rose-pine">Rose Pine</option>
-          <option value="gruvbox-dark-hard">Gruvbox Dark</option>
-        </select>
+          onChange={setTheme}
+        />
         
         <select
           value={language()}

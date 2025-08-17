@@ -69,13 +69,16 @@ grammarly-extension {
   border: 2px solid #555;
   background: #2a2a2a;
   color: #fff;
-  font-size: 18px;
-  font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.help-button [class*="i-lucide"] {
+  width: 20px;
+  height: 20px;
 }
 
 .help-button:hover {
@@ -127,7 +130,6 @@ grammarly-extension {
   background: none;
   border: none;
   color: #888;
-  font-size: 28px;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -136,6 +138,11 @@ grammarly-extension {
   align-items: center;
   justify-content: center;
   border-radius: 4px;
+}
+
+.close-button [class*="i-lucide"] {
+  width: 20px;
+  height: 20px;
 }
 
 .close-button:hover {
@@ -264,7 +271,7 @@ grammarly-extension {
   cursor: pointer;
 }
 
-.twoslash-toggle input[type="checkbox"] {
+.twoslash-toggle input[type='checkbox'] {
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -275,80 +282,225 @@ grammarly-extension {
   overflow: hidden;
 }
 
+/* Ark UI Theme Selector */
+.searchable-theme-selector {
+  min-width: 200px;
+}
+
+.theme-selector-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.theme-selector-input {
+  background: #1a1a1a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 32px 8px 12px;
+  font-size: 14px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.theme-selector-input:focus {
+  outline: none;
+  border-color: #0969da;
+  cursor: text;
+}
+
+.theme-selector-trigger {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.theme-selector-arrow {
+  color: #888;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.theme-selector-trigger[data-state='open'] .theme-selector-arrow {
+  transform: rotate(180deg);
+}
+
+.theme-selector-dropdown {
+  background: #1a1a1a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  padding: 4px 0;
+}
+
+.theme-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.1s ease;
+  color: #fff;
+}
+
+.theme-option[data-highlighted] {
+  background: #2a2a2a;
+}
+
+.theme-option[data-selected] {
+  background: #0969da;
+  color: #fff;
+}
+
+.theme-option[data-selected] .theme-category {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.theme-name {
+  flex: 1;
+}
+
+.theme-category {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+
+.theme-category.dark {
+  background: #2d1b69;
+  color: #a78bfa;
+}
+
+.theme-category.light {
+  background: #fbbf24;
+  color: #92400e;
+}
+
 @media (prefers-color-scheme: light) {
   .top-bar {
     background: #f6f8fa;
     border-bottom-color: #d0d7de;
   }
-  
+
   .logo {
     color: #1f2328;
   }
-  
+
   .help-button {
     background: #fff;
     border-color: #d0d7de;
     color: #1f2328;
   }
-  
+
   .help-button:hover {
     background: #f3f4f6;
     border-color: #8c959f;
   }
-  
+
   .modal-content {
     background: #fff;
     border-color: #d0d7de;
     color: #1f2328;
   }
-  
+
   .modal-header {
     border-bottom-color: #d0d7de;
   }
-  
+
   .close-button {
     color: #656d76;
   }
-  
+
   .close-button:hover {
     background: #f3f4f6;
     color: #1f2328;
   }
-  
+
   .modal-body code {
     background: #f6f8fa;
   }
-  
+
   .modal-body kbd {
     background: #f6f8fa;
     border-color: #d0d7de;
   }
-  
+
   .example-code pre {
     background: #f6f8fa;
     border-color: #d0d7de;
   }
-  
+
   .example-code code {
     color: #1f2328;
   }
-  
+
   .editor-controls {
     background: #f6f8fa;
     border-bottom-color: #d0d7de;
   }
-  
+
   .control-select {
     background: #fff;
     border-color: #d0d7de;
     color: #1f2328;
   }
-  
+
   .control-select:focus {
     border-color: #0969da;
   }
-  
+
   .twoslash-toggle {
     color: #1f2328;
+  }
+
+  .theme-selector-input {
+    background: #fff;
+    border-color: #d0d7de;
+    color: #1f2328;
+  }
+
+  .theme-selector-input:focus {
+    border-color: #0969da;
+  }
+
+  .theme-selector-arrow {
+    color: #656d76;
+  }
+
+  .theme-selector-dropdown {
+    background: #fff;
+    border-color: #d0d7de;
+  }
+
+  .theme-option {
+    color: #1f2328;
+  }
+
+  .theme-option[data-highlighted] {
+    background: #f3f4f6;
+  }
+
+  .theme-option[data-selected] {
+    background: #0969da;
+    color: #fff;
   }
 }
