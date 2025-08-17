@@ -20,8 +20,17 @@ const user: User = {
   email: "alice@example.com"
 };
 
-// Hover over variables to see type information
+// Multiple query tooltips demo
 const greeting = greetUser(user);
+//    ^?
+
+const userId = user.id;
+//    ^?
+
+const userName = user.name;
+//    ^?
+
+const userEmail = user.email;
 //    ^?
 
 // You can see type errors by uncommenting this:
@@ -51,8 +60,17 @@ const user: User = {
   email: "alice@example.com"
 };
 
-// Hover over variables to see type information
+// Multiple query tooltips demo
 const greeting = greetUser(user);
+//    ^?
+
+const userId = user.id;
+//    ^?
+
+const userName = user.name;
+//    ^?
+
+const userEmail = user.email;
 //    ^?`,
     javascript: `// JavaScript example
 function fibonacci(n) {

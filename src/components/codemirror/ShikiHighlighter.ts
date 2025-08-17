@@ -163,6 +163,7 @@ export class ShikiHighlighter {
         handbookOptions: {
           noErrorValidation: true,
           noStaticSemanticInfo: false,
+          keepNotations: true,
         },
       });
     } catch (error: any) {
