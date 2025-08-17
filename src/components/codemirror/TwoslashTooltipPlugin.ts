@@ -13,11 +13,12 @@ import { ShikiHighlighter } from './ShikiHighlighter';
 import { updateShikiConfig } from './ShikiEditorPlugin';
 import type { NodeHover, NodeCompletion, NodeError, NodeQuery } from 'twoslash';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
-import type { BundledLanguage } from 'shiki';
+import type { BundledLanguage, BundledTheme } from 'shiki';
 
 interface TwoslashTooltipConfig {
   highlighter?: ShikiHighlighter;
   language?: BundledLanguage;
+  theme?: BundledTheme;
   delay?: number;
 }
 
@@ -30,6 +31,30 @@ interface TwoslashData {
 
 // State effect for updating TwoSlash data
 const setTwoslashData = StateEffect.define<TwoslashData>();
+
+// State effect for updating theme in decorations
+const updateTooltipTheme = StateEffect.define<BundledTheme>();
+
+// State field to store current theme
+const currentThemeField = StateField.define<BundledTheme>({
+  create() {
+    return 'github-light';
+  },
+  update(value, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(updateTooltipTheme)) {
+        return effect.value;
+      }
+      if (effect.is(updateShikiConfig)) {
+        const { theme } = effect.value;
+        if (theme) {
+          return theme;
+        }
+      }
+    }
+    return value;
+  },
+});
 
 // State field to store TwoSlash data
 const twoslashDataField = StateField.define<TwoslashData>({
@@ -51,22 +76,48 @@ const twoslashDataField = StateField.define<TwoslashData>({
   },
 });
 
-// State field for query decorations (^? tooltips)
-const queryDecorationsField = StateField.define<DecorationSet>({
-  create() {
-    return Decoration.none;
-  },
-  update(decorations, tr) {
-    decorations = decorations.map(tr.changes);
-    for (const effect of tr.effects) {
-      if (effect.is(setTwoslashData)) {
-        const data = effect.value;
+// State field for query decorations (^? tooltips) - needs to be created as a function
+const createQueryDecorationsField = (highlighter?: ShikiHighlighter, language?: BundledLanguage, initialTheme?: BundledTheme) => {
+  let currentTheme = initialTheme || 'github-light';
+  
+  return StateField.define<DecorationSet>({
+    create() {
+      return Decoration.none;
+    },
+    update(decorations, tr) {
+      let shouldRebuild = false;
+      let data: TwoslashData | null = null;
+      
+      // Check for theme updates
+      for (const effect of tr.effects) {
+        if (effect.is(updateTooltipTheme)) {
+          currentTheme = effect.value;
+          shouldRebuild = true;
+          // Get current data from state
+          data = tr.state.field(twoslashDataField);
+        }
+        if (effect.is(updateShikiConfig)) {
+          const { theme } = effect.value;
+          if (theme) {
+            currentTheme = theme;
+            shouldRebuild = true;
+            // Get current data from state
+            data = tr.state.field(twoslashDataField);
+          }
+        }
+        if (effect.is(setTwoslashData)) {
+          data = effect.value;
+          shouldRebuild = true;
+        }
+      }
+      
+      if (shouldRebuild && data && data.queries.size > 0) {
         const builder = new RangeSetBuilder<Decoration>();
         
         // Add decorations for queries (^? comments)
         for (const [pos, query] of data.queries) {
           const decoration = Decoration.widget({
-            widget: new QueryTooltipWidget(query.text || '', query.docs),
+            widget: new QueryTooltipWidget(query.text || '', query.docs, highlighter, language, currentTheme),
             side: 1,
             block: false,
           });
@@ -76,22 +127,50 @@ const queryDecorationsField = StateField.define<DecorationSet>({
         }
         
         return builder.finish();
+      } else if (shouldRebuild && data) {
+        // Clear decorations if no queries
+        return Decoration.none;
       }
-    }
-    return decorations;
-  },
-  provide: (f) => EditorView.decorations.from(f),
-});
+      
+      return decorations.map(tr.changes);
+    },
+    provide: (f) => EditorView.decorations.from(f),
+  });
+};
 
 // Widget for displaying query tooltips
 class QueryTooltipWidget extends WidgetType {
   text: string;
   docs?: string;
+  highlighter?: ShikiHighlighter;
+  language?: BundledLanguage;
+  theme?: BundledTheme;
   
-  constructor(text: string, docs?: string) {
+  constructor(text: string, docs?: string, highlighter?: ShikiHighlighter, language?: BundledLanguage, theme?: BundledTheme) {
     super();
     this.text = text;
     this.docs = docs;
+    this.highlighter = highlighter;
+    this.language = language;
+    this.theme = theme;
+  }
+
+  async renderHighlightedCode(code: string): Promise<string> {
+    if (!this.highlighter || !this.highlighter.isInitialized()) {
+      return escapeHtml(code);
+    }
+    
+    try {
+      // Use TypeScript for type information highlighting with current theme
+      const tokens = await this.highlighter.tokenize(code, 'typescript', this.theme);
+      if (tokens.length > 0) {
+        return this.highlighter.renderTokensToHtml(tokens[0].tokens);
+      }
+    } catch (e) {
+      // Fall back to plain text if highlighting fails
+    }
+    
+    return escapeHtml(code);
   }
 
   toDOM(): HTMLElement {
@@ -99,48 +178,102 @@ class QueryTooltipWidget extends WidgetType {
     wrapper.style.cssText = `
       position: relative;
       display: inline-block;
+      margin-left: 4px;
     `;
+    
+    // Determine colors based on theme
+    const isDark = this.theme && this.theme.includes('dark');
+    const bgColor = isDark ? '#1e1e1e' : '#ffffff';
+    const borderColor = isDark ? '#454545' : '#d1d5db';
+    const textColor = isDark ? '#d4d4d4' : '#1f2937';
+    const shadowColor = isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
     
     const container = document.createElement('div');
     container.className = 'cm-twoslash-query-tooltip';
     container.style.cssText = `
       position: absolute;
-      bottom: 100%;
-      left: 0;
-      margin-bottom: 4px;
-      padding: 6px 10px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      border: 1px solid #454545;
+      bottom: calc(100% + 2px);
+      left: -10px;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      background: ${bgColor};
+      color: ${textColor};
+      border: 1px solid ${borderColor};
       border-radius: 6px;
       font-size: 12px;
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      min-width: 200px;
       max-width: 500px;
-      white-space: pre-wrap;
+      white-space: nowrap;
+      overflow: visible;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 2px 8px ${shadowColor};
       pointer-events: none;
     `;
     
+    // Add arrow pointing down
+    const arrow = document.createElement('div');
+    arrow.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid ${borderColor};
+    `;
+    container.appendChild(arrow);
+    
+    const arrowInner = document.createElement('div');
+    arrowInner.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid ${bgColor};
+      margin-top: -1px;
+    `;
+    container.appendChild(arrowInner);
+    
     // Add type info
     const typeDiv = document.createElement('div');
-    typeDiv.textContent = this.text || '(no type info)';
+    typeDiv.className = 'cm-twoslash-type-content';
     typeDiv.style.cssText = `
-      color: #4ec9b0;
-      word-break: break-word;
+      white-space: pre;
+      overflow-x: auto;
+      max-width: 100%;
     `;
+    
+    // Apply syntax highlighting asynchronously
+    if (this.highlighter && this.highlighter.isInitialized()) {
+      this.renderHighlightedCode(this.text || '(no type info)').then(html => {
+        typeDiv.innerHTML = html;
+      });
+    } else {
+      typeDiv.textContent = this.text || '(no type info)';
+    }
+    
     container.appendChild(typeDiv);
     
     // Add docs if available
     if (this.docs) {
       const docsDiv = document.createElement('div');
       docsDiv.textContent = this.docs;
+      const docsColor = isDark ? '#9cdcfe' : '#0969da';
       docsDiv.style.cssText = `
-        margin-top: 4px;
-        padding-top: 4px;
-        border-top: 1px solid #454545;
-        color: #9cdcfe;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid ${borderColor};
+        color: ${docsColor};
         font-size: 11px;
+        white-space: pre-wrap;
+        max-width: 500px;
       `;
       container.appendChild(docsDiv);
     }
@@ -158,6 +291,7 @@ class TwoslashTooltipView {
   public view: EditorView;
   private highlighter: ShikiHighlighter;
   private language: BundledLanguage;
+  private theme: BundledTheme;
   private updateTimeout: number | null = null;
   private lastContent: string = '';
   decorations: DecorationSet = Decoration.none;
@@ -169,6 +303,7 @@ class TwoslashTooltipView {
     this.view = view;
     this.highlighter = config.highlighter || new ShikiHighlighter();
     this.language = config.language || 'typescript';
+    this.theme = config.theme || 'github-light';
     
     // Initial TwoSlash analysis
     this.updateTwoslashData();
@@ -179,9 +314,21 @@ class TwoslashTooltipView {
     for (const tr of [update.transactions].flat()) {
       for (const effect of tr.effects) {
         if (effect.is(updateShikiConfig)) {
-          const { language } = effect.value;
+          const { language, theme } = effect.value;
+          
           if (language && language !== this.language) {
             this.setLanguage(language);
+          }
+          
+          if (theme && theme !== this.theme) {
+            this.theme = theme;
+            // Force re-analysis with new theme to update highlighting
+            this.lastContent = ''; // Force re-analysis
+            this.scheduleUpdate();
+            // Also dispatch effect to update existing tooltip decorations
+            this.view.dispatch({
+              effects: updateTooltipTheme.of(theme)
+            });
           }
         }
       }
@@ -228,10 +375,11 @@ class TwoslashTooltipView {
       await this.highlighter.initialize();
     }
     
-    // Get TwoSlash data from highlighter
+    // Get TwoSlash data from highlighter with current theme
     const result = await this.highlighter.highlightWithTwoslash(
       content,
-      this.language
+      this.language,
+      this.theme
     );
 
     if (result.twoslashData) {
@@ -290,6 +438,7 @@ class TwoslashTooltipView {
 function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
   return hoverTooltip((view, pos) => {
     const data = view.state.field(twoslashDataField);
+    const currentTheme = view.state.field(currentThemeField);
     
     // Check for hover info at current position
     let hoverInfo: NodeHover | null = null;
@@ -340,12 +489,18 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
         dom.className = 'cm-twoslash-tooltip';
         dom.innerHTML = content;
         
+        // Determine colors based on theme
+        const isDark = currentTheme && currentTheme.includes('dark');
+        const bgColor = isDark ? '#1e1e1e' : '#ffffff';
+        const borderColor = isDark ? '#454545' : '#d1d5db';
+        const textColor = isDark ? '#d4d4d4' : '#1f2937';
+        
         // Apply styles
         dom.style.padding = '8px 12px';
         dom.style.borderRadius = '6px';
-        dom.style.backgroundColor = '#1e1e1e';
-        dom.style.color = '#d4d4d4';
-        dom.style.border = '1px solid #454545';
+        dom.style.backgroundColor = bgColor;
+        dom.style.color = textColor;
+        dom.style.border = `1px solid ${borderColor}`;
         dom.style.fontSize = '13px';
         dom.style.maxWidth = '500px';
         dom.style.lineHeight = '1.4';
@@ -430,8 +585,11 @@ const errorUnderlineField = StateField.define<DecorationSet>({
 export function twoslashTooltipPlugin(
   config: TwoslashTooltipConfig = {}
 ): Extension[] {
+  const queryDecorationsField = createQueryDecorationsField(config.highlighter, config.language, config.theme);
+  
   return [
     twoslashDataField,
+    currentThemeField.init(() => config.theme || 'github-light'),
     queryDecorationsField,
     errorUnderlineField,
     ViewPlugin.define(
@@ -445,6 +603,9 @@ export function twoslashTooltipPlugin(
     EditorView.baseTheme({
       '.cm-twoslash-query-tooltip': {
         position: 'absolute !important',
+      },
+      '.cm-twoslash-type-content': {
+        fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
       },
     }),
   ];

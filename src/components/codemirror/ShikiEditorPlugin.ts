@@ -5,7 +5,12 @@ import {
   EditorView,
 } from '@codemirror/view';
 import type { DecorationSet } from '@codemirror/view';
-import { RangeSetBuilder, StateEffect, StateField, Compartment } from '@codemirror/state';
+import {
+  RangeSetBuilder,
+  StateEffect,
+  StateField,
+  Compartment,
+} from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
 import { ShikiHighlighter } from './ShikiHighlighter';
 import type { BundledLanguage, BundledTheme } from 'shiki';
@@ -53,16 +58,13 @@ class ShikiEditorView {
   private updateTimeout: number | null = null;
   private lastContent: string = '';
 
-  constructor(
-    view: EditorView,
-    config: ShikiEditorPluginConfig
-  ) {
+  constructor(view: EditorView, config: ShikiEditorPluginConfig) {
     this.view = view;
     this.highlighter = config.highlighter || new ShikiHighlighter();
     this.language = config.language || 'javascript';
     this.theme = config.theme || 'github-light';
     this.decorations = Decoration.none;
-    
+
     // Initial highlighting
     this.updateDecorations();
   }
@@ -82,7 +84,7 @@ class ShikiEditorView {
         }
       }
     }
-    
+
     if (update.docChanged || update.viewportChanged) {
       this.scheduleUpdate();
     }
@@ -92,7 +94,7 @@ class ShikiEditorView {
     if (this.updateTimeout !== null) {
       clearTimeout(this.updateTimeout);
     }
-    
+
     // Debounce updates for performance
     this.updateTimeout = window.setTimeout(() => {
       this.updateDecorations();
@@ -102,14 +104,14 @@ class ShikiEditorView {
 
   private async updateDecorations() {
     const content = this.view.state.doc.toString();
-    
+
     // Skip if content hasn't changed
     if (content === this.lastContent && this.decorations !== Decoration.none) {
       return;
     }
-    
+
     this.lastContent = content;
-    
+
     if (!content) {
       this.decorations = Decoration.none;
       this.view.dispatch();
@@ -121,9 +123,9 @@ class ShikiEditorView {
       const lines = await this.highlighter.tokenize(
         content,
         this.language,
-        this.theme
+        this.theme,
       );
-      
+
       // Extract theme colors from Shiki
       const themeColors = await this.getThemeColors();
 
@@ -134,7 +136,7 @@ class ShikiEditorView {
         for (const token of tokens) {
           const from = pos;
           const to = pos + token.content.length;
-          
+
           if (token.color) {
             const decoration = Decoration.mark({
               attributes: {
@@ -142,13 +144,13 @@ class ShikiEditorView {
               },
               class: 'shiki-token',
             });
-            
+
             builder.add(from, to, decoration);
           }
-          
+
           pos = to;
         }
-        
+
         // Account for newline character
         if (pos < content.length && content[pos] === '\n') {
           pos++;
@@ -156,7 +158,7 @@ class ShikiEditorView {
       }
 
       this.decorations = builder.finish();
-      
+
       // Update theme colors and force a view update
       this.view.dispatch({
         effects: [
@@ -169,25 +171,29 @@ class ShikiEditorView {
       this.decorations = Decoration.none;
     }
   }
-  
+
   private async getThemeColors(): Promise<ThemeColors> {
     // Get theme data from Shiki
     const themeData = this.highlighter.getThemeData(this.theme);
-    
+
     if (!themeData) {
       return {
         background: '#ffffff',
         foreground: '#000000',
       };
     }
-    
+
     return {
       background: themeData.bg || '#ffffff',
       foreground: themeData.fg || '#000000',
-      selectionBackground: themeData.colors?.['editor.selectionBackground'] || 
-                           themeData.colors?.['selection.background'] || undefined,
-      lineHighlight: themeData.colors?.['editor.lineHighlightBackground'] || 
-                     themeData.colors?.['lineHighlight.background'] || undefined,
+      selectionBackground:
+        themeData.colors?.['editor.selectionBackground'] ||
+        themeData.colors?.['selection.background'] ||
+        undefined,
+      lineHighlight:
+        themeData.colors?.['editor.lineHighlightBackground'] ||
+        themeData.colors?.['lineHighlight.background'] ||
+        undefined,
     };
   }
 
@@ -212,11 +218,11 @@ class ShikiEditorView {
       this.updateDecorations();
     }
   }
-  
+
   getLanguage(): BundledLanguage {
     return this.language;
   }
-  
+
   getTheme(): BundledTheme {
     return this.theme;
   }
@@ -250,13 +256,16 @@ function themeFromColors(colors: ThemeColors): Extension {
       borderRight: `1px solid ${colors.foreground}20 !important`,
     },
     '.cm-activeLineGutter': {
-      backgroundColor: colors.lineHighlight || `${colors.foreground}10` + ' !important',
+      backgroundColor:
+        colors.lineHighlight || `${colors.foreground}10` + ' !important',
     },
     '.cm-activeLine': {
-      backgroundColor: colors.lineHighlight || `${colors.foreground}08` + ' !important',
+      backgroundColor:
+        colors.lineHighlight || `${colors.foreground}08` + ' !important',
     },
     '.cm-selectionBackground, ::selection': {
-      backgroundColor: colors.selectionBackground || `${colors.foreground}20` + ' !important',
+      backgroundColor:
+        colors.selectionBackground || `${colors.foreground}20` + ' !important',
     },
     '.cm-cursor, .cm-cursor-primary': {
       borderLeftColor: colors.foreground + ' !important',
@@ -280,23 +289,23 @@ export const updateShikiConfig = StateEffect.define<{
 export { themeCompartment };
 
 export function shikiEditorPlugin(
-  config: ShikiEditorPluginConfig = {}
+  config: ShikiEditorPluginConfig = {},
 ): Extension[] {
   const plugin = ViewPlugin.define(
     (view) => new ShikiEditorView(view, config),
     {
       decorations: (v) => v.decorations,
-    }
+    },
   );
-  
+
   // Initialize with default theme colors
   const initialTheme = themeCompartment.of(
     themeFromColors({
       background: config.theme === 'github-dark' ? '#0d1117' : '#ffffff',
       foreground: config.theme === 'github-dark' ? '#c9d1d9' : '#24292e',
-    })
+    }),
   );
-  
+
   return [themeColorsField, initialTheme, plugin];
 }
 
@@ -307,16 +316,16 @@ export async function createShikiEditorExtension(
     theme?: BundledTheme;
     themes?: BundledTheme[];
     langs?: BundledLanguage[];
-  } = {}
+  } = {},
 ): Promise<Extension> {
   const highlighter = new ShikiHighlighter({
     themes: config.themes,
     langs: config.langs,
   });
-  
+
   // Pre-initialize the highlighter
   await highlighter.initialize();
-  
+
   return shikiEditorPlugin({
     language: config.language,
     theme: config.theme,
