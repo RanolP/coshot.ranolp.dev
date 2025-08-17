@@ -1,7 +1,9 @@
 import { createSignal } from 'solid-js';
+import CodeMirrorDemo from './components/CodeMirrorDemo';
 
 function App() {
   const [count, setCount] = createSignal(0);
+  const [showCodeMirror, setShowCodeMirror] = createSignal(false);
 
   return (
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
@@ -107,11 +109,25 @@ function App() {
                 <div class="i-carbon-reset w-4 h-4 mr-2" />
                 Reset
               </button>
+              <button
+                onClick={() => setShowCodeMirror(!showCodeMirror())}
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 flex items-center"
+              >
+                <div class="i-carbon-code w-4 h-4 mr-2" />
+                {showCodeMirror() ? 'Hide' : 'Show'} CodeMirror
+              </button>
             </div>
             <p class="text-gray-400">
               Try clicking the buttons above to see reactive updates in action!
             </p>
           </div>
+
+          {/* CodeMirror Demo */}
+          {showCodeMirror() && (
+            <div class="mt-8">
+              <CodeMirrorDemo />
+            </div>
+          )}
         </div>
       </main>
 
