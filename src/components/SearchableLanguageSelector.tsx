@@ -244,11 +244,11 @@ const SearchableLanguageSelector: Component<SearchableLanguageSelectorProps> = (
       />
       <Combobox.Control class="relative inline-flex items-center">
         <label 
-          class="inline-grid items-center relative rounded-6px after:content-[attr(data-value)_'_'] after:invisible after:whitespace-pre-wrap after:pr-32px after:py-8px after:grid-area-[1/1] after:w-auto after:font-inherit after:text-14px after:pointer-events-none"
+          class="inline-grid items-center relative rounded-6px after:content-[attr(data-value)_'_'] after:invisible after:whitespace-pre-wrap after:pr-32px after:py-8px after:grid-area-[1/1] after:w-auto after:font-inherit after:text-13px after:pointer-events-none"
           data-value={inputValue()}
         >
           <Combobox.Input
-            class="text-14px cursor-pointer focus:cursor-text grid-area-[1/1] w-auto pr-32px py-8px border-none outline-none focus:outline-none focus-visible:outline-none appearance-none font-inherit rounded-6px bg-transparent transition-background-color"
+            class="text-13px cursor-pointer focus:cursor-text grid-area-[1/1] w-auto pr-32px py-8px border-none outline-none focus:outline-none focus-visible:outline-none appearance-none font-inherit rounded-6px bg-transparent transition-background-color"
             size="1"
             style={{
               color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
@@ -283,7 +283,7 @@ const SearchableLanguageSelector: Component<SearchableLanguageSelectorProps> = (
             {(language) => (
               <Combobox.Item
                 item={language}
-                class="language-selector-item px-12px py-8px cursor-pointer text-14px transition-colors duration-100"
+                class="language-selector-item px-12px py-8px cursor-pointer text-13px transition-colors duration-100"
                 style={{
                   color: colors()?.['list.inactiveSelectionForeground'] || colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)'
                 }}
