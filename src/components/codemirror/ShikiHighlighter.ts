@@ -35,14 +35,7 @@ export class ShikiHighlighter {
   constructor(options: ShikiHighlighterOptions = {}) {
     this.options = {
       themes: options.themes || ['github-light', 'github-dark'],
-      langs: options.langs || [
-        'javascript',
-        'typescript',
-        'tsx',
-        'jsx',
-        'css',
-        'html',
-      ],
+      langs: options.langs || [],  // We'll load languages on demand
       defaultTheme: options.defaultTheme || 'github-light',
       defaultLang: options.defaultLang || 'javascript',
     };
@@ -56,10 +49,11 @@ export class ShikiHighlighter {
   }
 
   private async performInitialization(): Promise<void> {
-    // Initialize Shiki highlighter
+    // Initialize Shiki highlighter with minimal languages
+    // We'll load other languages on demand
     this.highlighter = await createHighlighter({
       themes: this.options.themes!,
-      langs: this.options.langs!,
+      langs: ['javascript', 'typescript', 'html', 'css'],  // Start with common languages
     });
 
     // Dynamically import twoslash-cdn for client-side usage
@@ -85,6 +79,22 @@ export class ShikiHighlighter {
     await this.twoslashInstance.init();
   }
 
+  async loadLanguage(lang: string): Promise<void> {
+    if (!this.highlighter) {
+      await this.initialize();
+    }
+
+    const loadedLanguages = this.highlighter!.getLoadedLanguages();
+    if (!loadedLanguages.includes(lang as BundledLanguage)) {
+      try {
+        await this.highlighter!.loadLanguage(lang as BundledLanguage);
+      } catch (error) {
+        console.warn(`Failed to load language: ${lang}`, error);
+        // Fall back to plain text if language loading fails
+      }
+    }
+  }
+
   async tokenize(
     code: string,
     lang?: BundledLanguage,
@@ -98,6 +108,9 @@ export class ShikiHighlighter {
 
     const language = lang || this.options.defaultLang!;
     const selectedTheme = theme || this.options.defaultTheme!;
+
+    // Ensure the language is loaded
+    await this.loadLanguage(language);
 
     // Get tokens from Shiki
     const tokens = this.highlighter.codeToTokens(code, {
@@ -124,6 +137,9 @@ export class ShikiHighlighter {
     if (!this.highlighter || !this.twoslashInstance) {
       throw new Error('Highlighter or TwoSlash not initialized');
     }
+
+    // Ensure the language is loaded
+    await this.loadLanguage(lang);
 
     const selectedTheme = theme || this.options.defaultTheme!;
 
@@ -245,7 +261,15 @@ export class ShikiHighlighter {
   /**
    * Extract theme colors including background, foreground, and other UI colors
    */
-  getThemeColors(themeName: BundledTheme): { bg: string; fg: string; border: string } {
+  getThemeColors(themeName: BundledTheme): { 
+    bg: string; 
+    fg: string; 
+    border: string;
+    selection?: string;
+    activeLineHighlight?: string;
+    searchMatch?: string;
+    searchMatchSelected?: string;
+  } {
     if (!this.highlighter) {
       return { bg: '#ffffff', fg: '#000000', border: '#e1e4e8' };
     }
@@ -255,15 +279,56 @@ export class ShikiHighlighter {
       const bg = theme.bg || '#ffffff';
       const fg = theme.fg || '#000000';
       
-      // Calculate border color based on background
-      const isDark = this.isColorDark(bg);
-      const border = isDark ? this.lightenColor(bg, 0.2) : this.darkenColor(bg, 0.1);
+      // Extract actual theme colors from VSCode theme format
+      const colors = (theme as any).colors || {};
       
-      return { bg, fg, border };
+      return { 
+        bg, 
+        fg, 
+        // Use actual theme colors if available, otherwise derive from bg
+        border: colors['panel.border'] || 
+                colors['editorGroup.border'] || 
+                colors['editor.lineHighlightBorder'] ||
+                this.mixColors(bg, fg, 0.1),
+        selection: colors['editor.selectionBackground'] || 
+                   colors['selection.background'] ||
+                   this.mixColors(bg, '#0066cc', 0.3),
+        activeLineHighlight: colors['editor.lineHighlightBackground'] ||
+                            colors['editor.rangeHighlightBackground'] ||
+                            this.mixColors(bg, fg, 0.05),
+        searchMatch: colors['editor.findMatchBackground'] ||
+                    colors['editor.findMatchHighlightBackground'] ||
+                    '#ffeb3b',
+        searchMatchSelected: colors['editor.findMatchBorder'] ||
+                            colors['editor.findMatchHighlightBorder'] ||
+                            '#ff5722',
+      };
     } catch (error) {
       console.warn('Failed to get theme colors:', error);
       return { bg: '#ffffff', fg: '#000000', border: '#e1e4e8' };
     }
+  }
+
+  /**
+   * Mix two colors together
+   */
+  private mixColors(color1: string, color2: string, ratio: number): string {
+    const hex1 = color1.replace('#', '');
+    const hex2 = color2.replace('#', '');
+    
+    const r1 = parseInt(hex1.substring(0, 2), 16);
+    const g1 = parseInt(hex1.substring(2, 4), 16);
+    const b1 = parseInt(hex1.substring(4, 6), 16);
+    
+    const r2 = parseInt(hex2.substring(0, 2), 16);
+    const g2 = parseInt(hex2.substring(2, 4), 16);
+    const b2 = parseInt(hex2.substring(4, 6), 16);
+    
+    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 
   /**
@@ -278,27 +343,6 @@ export class ShikiHighlighter {
     return luminance < 0.5;
   }
 
-  /**
-   * Lighten a color by a percentage
-   */
-  private lightenColor(color: string, percent: number): string {
-    const hex = color.replace('#', '');
-    const r = Math.min(255, parseInt(hex.substring(0, 2), 16) + Math.round(255 * percent));
-    const g = Math.min(255, parseInt(hex.substring(2, 4), 16) + Math.round(255 * percent));
-    const b = Math.min(255, parseInt(hex.substring(4, 6), 16) + Math.round(255 * percent));
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-
-  /**
-   * Darken a color by a percentage
-   */
-  private darkenColor(color: string, percent: number): string {
-    const hex = color.replace('#', '');
-    const r = Math.max(0, parseInt(hex.substring(0, 2), 16) - Math.round(255 * percent));
-    const g = Math.max(0, parseInt(hex.substring(2, 4), 16) - Math.round(255 * percent));
-    const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - Math.round(255 * percent));
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
 
   async dispose(): Promise<void> {
     if (this.highlighter) {

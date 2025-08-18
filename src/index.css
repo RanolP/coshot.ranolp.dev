@@ -234,9 +234,10 @@ grammarly-extension {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
-.editor-controls {
+.editor-top-bar {
   height: 60px;
   background: #2a2a2a;
   border-bottom: 1px solid #333;
@@ -245,6 +246,64 @@ grammarly-extension {
   gap: 16px;
   padding: 0 20px;
   flex-shrink: 0;
+  z-index: 100;
+}
+
+.editor-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.resizable-editor {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.editor-status-bar {
+  height: 32px;
+  background: #2a2a2a;
+  border-top: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #8c8c8c;
+  z-index: 100;
+}
+
+.status-left,
+.status-right,
+.status-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 20px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: default;
 }
 
 .control-select {
@@ -280,6 +339,92 @@ grammarly-extension {
 .editor-container {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+}
+
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  user-select: none;
+  z-index: 10;
+}
+
+.resize-handle-right {
+  top: 10px;
+  bottom: 10px;
+  right: -4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.resize-handle-left {
+  top: 10px;
+  bottom: 10px;
+  left: -4px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.resize-handle-bottom {
+  left: 10px;
+  right: 10px;
+  bottom: -4px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle-top {
+  left: 10px;
+  right: 10px;
+  top: -4px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle-bottom-right {
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+.resize-handle-bottom-left {
+  bottom: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle-top-right {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle-top-left {
+  top: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+.resize-handle:hover {
+  background: rgba(9, 105, 218, 0.3);
+}
+
+.resize-handle-bottom-right:hover,
+.resize-handle-bottom-left:hover,
+.resize-handle-top-right:hover,
+.resize-handle-top-left:hover {
+  background: rgba(9, 105, 218, 0.5);
+  border-radius: 50%;
 }
 
 /* Ark UI Theme Selector */
@@ -453,9 +598,30 @@ grammarly-extension {
     color: #1f2328;
   }
 
-  .editor-controls {
+  .fullscreen-editor {
+    background: linear-gradient(135deg, #f6f8fa 0%, #ffffff 100%);
+  }
+
+  .resizable-editor {
+    background: #fff;
+    border-color: #d0d7de;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  }
+
+  .editor-top-bar {
     background: #f6f8fa;
     border-bottom-color: #d0d7de;
+  }
+
+  .editor-status-bar {
+    background: #f6f8fa;
+    border-top-color: #d0d7de;
+    color: #656d76;
+  }
+
+  .status-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1f2328;
   }
 
   .control-select {

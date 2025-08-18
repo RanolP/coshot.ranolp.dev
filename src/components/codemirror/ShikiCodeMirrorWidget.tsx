@@ -5,9 +5,14 @@ import { autocompletion } from '@codemirror/autocomplete';
 import { search } from '@codemirror/search';
 import { lintGutter } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
+import { Compartment } from '@codemirror/state';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
-import { twoslashTooltipPlugin, clearTwoslashData, enableTwoslashData } from './TwoslashTooltipPlugin';
+import {
+  twoslashTooltipPlugin,
+  clearTwoslashData,
+  enableTwoslashData,
+} from './TwoslashTooltipPlugin';
 import { ShikiHighlighter } from './ShikiHighlighter';
 
 // All available Shiki themes
@@ -94,19 +99,32 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   let editorRef: HTMLDivElement | undefined;
   let highlighterInstance: ShikiHighlighter | undefined;
   let previousTwoslashEnabled = false;
+  let themeCompartment: Compartment | undefined;
   const [editorView, setEditorView] = createSignal<EditorView | undefined>(
     undefined,
   );
   const [isReady, setIsReady] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(true);
-  const [themeColors, setThemeColors] = createSignal<{bg: string; fg: string; border: string}>({
+  const [themeColors, setThemeColors] = createSignal<{
+    bg: string;
+    fg: string;
+    border: string;
+    selection?: string;
+    activeLineHighlight?: string;
+    searchMatch?: string;
+    searchMatchSelected?: string;
+  }>({
     bg: '#ffffff',
-    fg: '#000000', 
-    border: '#e1e4e8'
+    fg: '#000000',
+    border: '#e1e4e8',
   });
 
   const updateThemeColors = () => {
-    if (highlighterInstance && highlighterInstance.isInitialized() && props.theme) {
+    if (
+      highlighterInstance &&
+      highlighterInstance.isInitialized() &&
+      props.theme
+    ) {
       const colors = highlighterInstance.getThemeColors(props.theme);
       setThemeColors(colors);
     }
@@ -114,6 +132,9 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
 
   const createThemeExtension = () => {
     const colors = themeColors();
+    // Use actual theme colors, not heuristics
+    const selectionBg = colors.selection || 'rgba(0, 123, 255, 0.25)';
+
     return EditorView.theme({
       '&': {
         fontSize: '14px',
@@ -135,6 +156,25 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       '.cm-line': {
         lineHeight: '1.6',
       },
+      // Selection styling - comprehensive coverage with higher specificity
+      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+        backgroundColor: `${selectionBg} !important`,
+      },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground':
+        {
+          backgroundColor: `${selectionBg} !important`,
+        },
+      '.cm-content ::selection': {
+        backgroundColor: `${selectionBg} !important`,
+      },
+      // Ensure selection is visible even when not focused
+      '& .cm-selectionBackground': {
+        backgroundColor: `${selectionBg} !important`,
+      },
+      // Make sure selection layer is above text decorations
+      '.cm-selectionLayer': {
+        zIndex: '1 !important',
+      },
       '.cm-tooltip': {
         backgroundColor: colors.bg,
         border: `1px solid ${colors.border}`,
@@ -151,19 +191,16 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           cursor: 'pointer',
         },
         '& > ul > li[aria-selected]': {
-          backgroundColor:
-            props.theme === 'github-dark' ? '#264f78' : '#007bff',
+          backgroundColor: colors.selection || '#007bff',
           color: '#fff',
         },
       },
       '.cm-searchMatch': {
-        backgroundColor:
-          props.theme === 'github-dark' ? '#ffd700' : '#ffeb3b',
+        backgroundColor: colors.searchMatch || '#ffeb3b',
         color: '#000',
       },
       '.cm-searchMatch.cm-searchMatch-selected': {
-        backgroundColor:
-          props.theme === 'github-dark' ? '#ff6b6b' : '#ff5722',
+        backgroundColor: colors.searchMatchSelected || '#ff5722',
         color: '#fff',
       },
       // Shiki token styles
@@ -201,16 +238,19 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         langs: ['javascript', 'typescript', 'tsx', 'jsx', 'css', 'html'],
       });
       await highlighterInstance.initialize();
-      
+
       // Update theme colors after initialization
       updateThemeColors();
-      
+
+      // Create theme compartment for dynamic updates
+      themeCompartment = new Compartment();
+
       const extensions: Extension[] = [
         basicSetup,
         autocompletion(),
         search(),
         lintGutter(),
-        createThemeExtension(),
+        themeCompartment.of(createThemeExtension()),
         EditorView.updateListener.of((update) => {
           if (update.docChanged && props.onChange) {
             props.onChange(update.state.doc.toString());
@@ -292,12 +332,19 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   // Update theme when prop changes
   createEffect(() => {
     const view = editorView();
-    if (view && props.theme) {
+    if (view && props.theme && highlighterInstance && themeCompartment) {
+      // Update theme colors first
+      updateThemeColors();
+
+      // Update shiki config
       view.dispatch({
         effects: updateShikiConfig.of({ theme: props.theme }),
       });
-      // Update theme colors when theme changes
-      updateThemeColors();
+
+      // Update the theme extension using compartment
+      view.dispatch({
+        effects: themeCompartment.reconfigure(createThemeExtension()),
+      });
     }
   });
 
@@ -316,8 +363,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
     const view = editorView();
     const isTwoslashEnabled = Boolean(
       props.enableTwoslash &&
-      props.language &&
-      ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language)
+        props.language &&
+        ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language),
     );
 
     if (view) {
@@ -338,7 +385,13 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   });
 
   return (
-    <div class={`shiki-codemirror-widget ${props.className || ''}`}>
+    <div class={`shiki-codemirror-widget ${props.className || ''}`}
+      style={{
+        display: 'flex',
+        'flex-direction': 'column',
+        height: '100%',
+      }}
+    >
       {isLoading() && (
         <div
           style={{
@@ -357,9 +410,11 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         ref={editorRef}
         class="editor-container"
         style={{
-          'border-radius': '8px',
+          flex: '1',
+          'border-radius': '8px 8px 0 0',
           overflow: 'hidden',
           border: `1px solid ${themeColors().border}`,
+          'border-bottom': 'none',
           opacity: isLoading() ? '0.5' : '1',
           transition: 'opacity 0.3s',
         }}
@@ -372,9 +427,10 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             gap: '8px',
             padding: '8px',
             background: themeColors().bg,
-            'border-top': `1px solid ${themeColors().border}`,
+            border: `1px solid ${themeColors().border}`,
+            'border-top': 'none',
             'border-radius': '0 0 8px 8px',
-            'margin-top': '-1px',
+            'flex-shrink': '0',
           }}
         >
           {props.showThemeSelector && (
@@ -396,7 +452,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             >
               {AVAILABLE_THEMES.map((theme) => (
                 <option value={theme}>
-                  {theme.charAt(0).toUpperCase() + theme.slice(1).replace(/-/g, ' ')}
+                  {theme.charAt(0).toUpperCase() +
+                    theme.slice(1).replace(/-/g, ' ')}
                 </option>
               ))}
             </select>
@@ -420,8 +477,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
                 <span
                   style={{
                     padding: '2px 6px',
-                    background:
-                      props.theme === 'github-dark' ? '#264f78' : '#007bff',
+                    background: themeColors().selection || '#007bff',
                     color: '#fff',
                     'border-radius': '3px',
                     'font-size': '10px',

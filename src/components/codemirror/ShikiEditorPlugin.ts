@@ -139,10 +139,14 @@ class ShikiEditorView {
 
           if (token.color) {
             const decoration = Decoration.mark({
+              class: `shiki-token`,
               attributes: {
+                'data-color': token.color,
                 style: `color: ${token.color}`,
               },
-              class: 'shiki-token',
+              // Lower priority to not interfere with selection
+              inclusiveStart: false,
+              inclusiveEnd: false,
             });
 
             builder.add(from, to, decoration);
@@ -298,11 +302,11 @@ export function shikiEditorPlugin(
     },
   );
 
-  // Initialize with default theme colors
+  // Initialize with default theme colors (will be updated once highlighter loads)
   const initialTheme = themeCompartment.of(
     themeFromColors({
-      background: config.theme === 'github-dark' ? '#0d1117' : '#ffffff',
-      foreground: config.theme === 'github-dark' ? '#c9d1d9' : '#24292e',
+      background: '#ffffff',
+      foreground: '#24292e',
     }),
   );
 
