@@ -229,9 +229,11 @@ function createQueryTooltipDOM(
     border-radius: 6px;
     font-size: 12px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    width: max-content;
     min-width: 200px;
     max-width: 500px;
-    white-space: nowrap;
+    white-space: pre-wrap;
+    word-break: break-word;
     overflow: visible;
     z-index: 1000;
     box-shadow: 0 2px 8px ${shadowColor};
@@ -242,9 +244,12 @@ function createQueryTooltipDOM(
   const typeDiv = document.createElement('div');
   typeDiv.className = 'cm-twoslash-type-content';
   typeDiv.style.cssText = `
-    white-space: pre;
-    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
     max-width: 100%;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    line-height: 1.4;
   `;
 
   // Apply syntax highlighting asynchronously
@@ -291,8 +296,14 @@ async function renderHighlightedCode(
   try {
     // Use TypeScript for type information highlighting with current theme
     const tokens = await highlighter.tokenize(code, 'typescript', theme);
+    
     if (tokens.length > 0) {
-      return highlighter.renderTokensToHtml(tokens[0].tokens);
+      // Render ALL lines, not just the first one!
+      const renderedLines = tokens.map(line => 
+        highlighter.renderTokensToHtml(line.tokens)
+      );
+      // Join lines with newlines to preserve multiline structure
+      return renderedLines.join('\n');
     }
   } catch (e) {
     // Fall back to plain text if highlighting fails
@@ -554,7 +565,11 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
           dom.style.color = textColor;
           dom.style.border = `1px solid ${borderColor}`;
           dom.style.fontSize = '13px';
+          dom.style.width = 'max-content';
+          dom.style.minWidth = '150px';
           dom.style.maxWidth = '500px';
+          dom.style.whiteSpace = 'pre-wrap';
+          dom.style.wordBreak = 'break-word';
           dom.style.lineHeight = '1.4';
 
           // Style error tooltips differently
@@ -746,6 +761,11 @@ export function twoslashTooltipPlugin(
       },
       '.cm-twoslash-type-content': {
         fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+      },
+      '.cm-twoslash-type-content span': {
+        whiteSpace: 'inherit',
       },
     }),
     // Add dynamic theme-based tooltip arrow styles

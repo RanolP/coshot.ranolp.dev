@@ -246,6 +246,7 @@ export class ShikiHighlighter {
     return tokens
       .map((token) => {
         const style = token.color ? `color: ${token.color}` : '';
+        // Escape HTML but preserve the original content including newlines
         return `<span style="${style}">${this.escapeHtml(
           token.content,
         )}</span>`;
