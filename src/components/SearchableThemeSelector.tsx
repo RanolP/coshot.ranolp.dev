@@ -15,6 +15,7 @@ const themes: ThemeOption[] = [
   { value: 'github-dark', label: 'GitHub Dark', category: 'dark' },
   { value: 'github-light', label: 'GitHub Light', category: 'light' },
   { value: 'andromeeda', label: 'Andromeeda', category: 'dark' },
+  { value: 'aurora-x', label: 'Aurora X', category: 'dark' },
   { value: 'ayu-dark', label: 'Ayu Dark', category: 'dark' },
   { value: 'catppuccin-frappe', label: 'Catppuccin Frappé', category: 'dark' },
   {
@@ -141,6 +142,12 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
   const filterFn = useFilter({ sensitivity: 'base' });
   const [triggerClicked, setTriggerClicked] = createSignal(false);
   
+  // Get the label for the current theme value
+  const getCurrentThemeLabel = () => {
+    const currentTheme = themes.find(t => t.value === props.value);
+    return currentTheme?.label || props.value;
+  };
+  
   // Apply dynamic styles for hover and selected states
   createEffect(() => {
     const themeColors = colors();
@@ -206,6 +213,7 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
     <Combobox.Root
       collection={collection()}
       value={[props.value]}
+      inputValue={getCurrentThemeLabel()}
       onValueChange={handleValueChange}
       onInputValueChange={handleInputChange}
       class="min-w-200px"
