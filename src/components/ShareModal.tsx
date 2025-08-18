@@ -40,6 +40,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
   const [previewHtml, setPreviewHtml] = createSignal('');
   const [tooltips, setTooltips] = createSignal<TwoslashTooltip[]>([]);
   const [draggedTooltip, setDraggedTooltip] = createSignal<string | null>(null);
+  const [tooltipsInitialized, setTooltipsInitialized] = createSignal(false);
   let previewRef: HTMLDivElement | undefined;
   let containerRef: HTMLDivElement | undefined;
   let highlighter: ShikiHighlighter | undefined;
@@ -75,6 +76,8 @@ const ShareModal: Component<ShareModalProps> = (props) => {
       const themeColors = await highlighter.getThemeColors(props.theme);
       const newTooltips: TwoslashTooltip[] = [];
       
+      let cleanCode = props.code;
+      
       if (props.enableTwoslash && ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language)) {
         // Render with TwoSlash but keepNotations: false for screenshots
         const result = await highlighter.highlightWithTwoslash(
@@ -84,20 +87,31 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           false // keepNotations: false for clean screenshots
         );
         
+        // Use the cleaned code from twoslash result (without notations)
+        cleanCode = result.twoslashData?.code || props.code;
+        
+        // Re-tokenize the clean code for display
+        const cleanTokens = await highlighter.tokenize(
+          cleanCode,
+          props.language as BundledLanguage,
+          props.theme
+        );
+        
         // Build HTML with twoslash annotations
         html = '<div class="shiki-container" style="font-family: \'Cascadia Code\', \'JetBrains Mono\', monospace; font-size: 14px; line-height: 1.5; position: relative;">';
         
-        result.lines.forEach((line, lineIndex) => {
+        cleanTokens.forEach((line, lineIndex) => {
           const lineNumber = lineIndex + 1;
+          console.log(`Generating HTML for line ${lineNumber}:`, cleanCode.split('\n')[lineIndex]?.substring(0, 50));
           html += `<div class="line" data-line="${lineNumber}" style="display: flex; min-height: 21px;">`;
           
           if (options().showLineNumbers) {
             html += `<span class="line-number" style="user-select: none; width: 3em; text-align: right; padding-right: 1em; opacity: 0.5;">${lineNumber}</span>`;
           }
           
-          html += '<span class="line-content" style="flex: 1; white-space: pre;">';
+          html += `<span class="line-content" data-line-content="${lineNumber}" style="flex: 1; white-space: pre;">`;
           
-          // Just render the tokens normally
+          // Render the clean tokens
           html += highlighter.renderTokensToHtml(line.tokens);
           
           html += '</span></div>';
@@ -107,9 +121,43 @@ const ShareModal: Component<ShareModalProps> = (props) => {
         
         // Process twoslash tooltips separately (after the main HTML is built)
         if (result.twoslashData && result.twoslashData.nodes) {
+          console.log('=== TWOSLASH DEBUG ===');
+          console.log('Twoslash nodes:', result.twoslashData.nodes);
+          console.log('Twoslash code (from result):', result.twoslashData.code);
+          console.log('Clean code (what we use):', cleanCode);
+          console.log('Are they the same?', result.twoslashData.code === cleanCode);
+          
+          // Let's see if the line numbers in nodes match the clean code
+          const cleanLines = cleanCode.split('\n');
+          result.twoslashData.nodes.forEach(node => {
+            if (node.type === 'query') {
+              console.log(`Query node line ${node.line}:`, cleanLines[node.line - 1]);
+            }
+          });
+          
           for (const node of result.twoslashData.nodes) {
             if (node.type === 'query') {
-              const tooltipId = `tooltip-${node.line}-${node.character}`;
+              // Use start position to find the actual line and character in clean code
+              const tooltipId = `tooltip-${node.start}`;
+              console.log('Processing query node:', node);
+              
+              // Calculate the actual line and character from start position
+              let currentPos = 0;
+              let actualLine = 1;
+              let actualCharacter = 0;
+              const cleanLines = cleanCode.split('\n');
+              
+              for (let i = 0; i < cleanLines.length; i++) {
+                const lineLength = cleanLines[i].length + 1; // +1 for newline
+                if (currentPos + lineLength > node.start) {
+                  actualLine = i + 1;
+                  actualCharacter = node.start - currentPos;
+                  break;
+                }
+                currentPos += lineLength;
+              }
+              
+              console.log('Calculated position:', { actualLine, actualCharacter, start: node.start });
               
               // Syntax highlight the tooltip text
               let tooltipHtml = '';
@@ -132,13 +180,13 @@ const ShareModal: Component<ShareModalProps> = (props) => {
               
               newTooltips.push({
                 id: tooltipId,
-                line: node.line,
-                character: node.character,
+                line: actualLine,
+                character: actualCharacter,
                 text: node.text || '',
                 html: tooltipHtml,
                 type: node.type as 'hover' | 'query',
-                x: 100 + (node.character * 8), // Approximate positioning
-                y: (node.line * 21) + 25  // Position below the line
+                x: -1000, // Off-screen initially to prevent glitch
+                y: -1000  // Off-screen initially to prevent glitch
               });
             }
           }
@@ -170,6 +218,84 @@ const ShareModal: Component<ShareModalProps> = (props) => {
       
       setPreviewHtml(html);
       setTooltips(newTooltips);
+      setTooltipsInitialized(false); // Reset initialization state
+      
+      // Calculate actual tooltip positions after DOM update
+      setTimeout(() => {
+        if (!previewRef || !containerRef) return;
+        
+        // Get the clean code (without notations) for position calculation
+        const codeLines = cleanCode.split('\n');
+        
+        const updatedTooltips = newTooltips.map(tooltip => {
+          console.log('Looking for line element:', tooltip.line);
+          const lineContent = previewRef.querySelector(`[data-line-content="${tooltip.line}"]`);
+          console.log('Found element:', lineContent);
+          if (!lineContent) {
+            console.error('Could not find line element for line:', tooltip.line);
+            return tooltip;
+          }
+          
+          // Use the character position directly from our calculation
+          const lineText = codeLines[tooltip.line - 1] || '';
+          
+          console.log('Tooltip positioning:', {
+            line: tooltip.line,
+            character: tooltip.character,
+            lineText
+          });
+          
+          // Measure the actual text width in the DOM
+          const lineElement = lineContent as HTMLElement;
+          const textContent = lineElement.textContent || '';
+          
+          // Create a range to measure text up to the target position
+          const range = document.createRange();
+          const textNode = lineElement.firstChild || lineElement;
+          
+          let textWidth = 0;
+          try {
+            if (textNode.nodeType === Node.TEXT_NODE) {
+              range.setStart(textNode, 0);
+              range.setEnd(textNode, Math.min(tooltip.character, textContent.length));
+              const rect = range.getBoundingClientRect();
+              textWidth = rect.width;
+            } else {
+              // Fallback to measuring with temporary element
+              const measurer = document.createElement('span');
+              measurer.style.cssText = 'position: absolute; visibility: hidden; white-space: pre; font-family: "Cascadia Code", "JetBrains Mono", monospace; font-size: 14px;';
+              measurer.textContent = textContent.substring(0, tooltip.character);
+              document.body.appendChild(measurer);
+              textWidth = measurer.clientWidth;
+              document.body.removeChild(measurer);
+            }
+          } catch (e) {
+            console.error('Error measuring text:', e);
+            // Fallback to approximate positioning
+            textWidth = tooltip.character * 8;
+          }
+          
+          // Get positions relative to the outer container (which has the padding)
+          const lineContentRect = lineContent.getBoundingClientRect();
+          const containerRect = containerRef.getBoundingClientRect();
+          const previewRect = previewRef.getBoundingClientRect();
+          
+          // Calculate position relative to container, accounting for preview's position within container
+          const relativeX = lineContentRect.left - containerRect.left + textWidth;
+          // Position above the line - estimate tooltip height (about 40px) and subtract it
+          const relativeY = lineContentRect.top - containerRect.top - 40;
+          
+          return {
+            ...tooltip,
+            x: relativeX,
+            y: relativeY
+          };
+        });
+        
+        setTooltips(updatedTooltips);
+        // Mark tooltips as initialized after first positioning
+        setTimeout(() => setTooltipsInitialized(true), 50);
+      }, 100);
       
     } catch (error) {
       console.error('Failed to generate preview:', error);
@@ -350,7 +476,8 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                       style={{
                         left: `${tooltip.x}px`,
                         top: `${tooltip.y}px`,
-                        cursor: draggedTooltip() === tooltip.id ? 'grabbing' : 'grab'
+                        cursor: draggedTooltip() === tooltip.id ? 'grabbing' : 'grab',
+                        transition: tooltipsInitialized() && draggedTooltip() !== tooltip.id ? 'all 0.2s ease' : 'none'
                       }}
                       onMouseDown={(e) => handleTooltipDragStart(e, tooltip.id)}
                     >
