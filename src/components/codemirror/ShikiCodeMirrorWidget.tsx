@@ -1,11 +1,13 @@
 import type { Component } from 'solid-js';
 import { createSignal, onCleanup, onMount, createEffect } from 'solid-js';
-import { EditorView, basicSetup } from 'codemirror';
-import { autocompletion } from '@codemirror/autocomplete';
-import { search } from '@codemirror/search';
-import { lintGutter } from '@codemirror/lint';
+import { EditorView } from 'codemirror';
+import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting } from '@codemirror/language';
+import { lintGutter, lintKeymap } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
-import { Compartment } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
+import { drawSelection, dropCursor, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection } from '@codemirror/view';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
 import {
@@ -112,8 +114,6 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
     border: string;
     selection?: string;
     activeLineHighlight?: string;
-    searchMatch?: string;
-    searchMatchSelected?: string;
   }>({
     bg: '#ffffff',
     fg: '#000000',
@@ -196,14 +196,6 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           color: '#fff',
         },
       },
-      '.cm-searchMatch': {
-        backgroundColor: colors.searchMatch || '#ffeb3b',
-        color: '#000',
-      },
-      '.cm-searchMatch.cm-searchMatch-selected': {
-        backgroundColor: colors.searchMatchSelected || '#ff5722',
-        color: '#fff',
-      },
       // Shiki token styles
       '.shiki-token': {
         transition: 'color 0.1s',
@@ -247,9 +239,30 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       themeCompartment = new Compartment();
 
       const extensions: Extension[] = [
-        basicSetup,
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightSpecialChars(),
+        history(),
+        foldGutter(),
+        drawSelection(),
+        dropCursor(),
+        EditorState.allowMultipleSelections.of(true),
+        indentOnInput(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        bracketMatching(),
+        closeBrackets(),
         autocompletion(),
-        search(),
+        rectangularSelection(),
+        highlightActiveLine(),
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...historyKeymap,
+          ...foldKeymap,
+          ...completionKeymap,
+          ...lintKeymap,
+          indentWithTab
+        ]),
         lintGutter(),
         themeCompartment.of(createThemeExtension()),
         EditorView.updateListener.of((update) => {
