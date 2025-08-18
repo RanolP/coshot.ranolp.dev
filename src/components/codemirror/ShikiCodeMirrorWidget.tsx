@@ -11,6 +11,7 @@ import { drawSelection, dropCursor, highlightActiveLine, highlightActiveLineGutt
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
 import SearchableThemeSelector from '../SearchableThemeSelector';
+import SearchableLanguageSelector from '../SearchableLanguageSelector';
 import {
   twoslashTooltipPlugin,
   clearTwoslashData,
@@ -220,11 +221,13 @@ interface ShikiCodeMirrorWidgetProps {
   height?: string;
   onChange?: (value: string) => void;
   onThemeChange?: (theme: BundledTheme) => void;
+  onLanguageChange?: (language: BundledLanguage) => void;
   readOnly?: boolean;
   placeholder?: string;
   className?: string;
   enableTwoslash?: boolean;
   showThemeSelector?: boolean;
+  showLanguageSelector?: boolean;
   lineWrapping?: boolean;
 }
 
@@ -581,6 +584,12 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             'flex-shrink': '0',
           }}
         >
+          {props.showLanguageSelector && (
+            <SearchableLanguageSelector
+              value={props.language || 'javascript'}
+              onChange={(language) => props.onLanguageChange?.(language)}
+            />
+          )}
           {props.showThemeSelector && (
             <SearchableThemeSelector
               value={props.theme || 'github-light'}

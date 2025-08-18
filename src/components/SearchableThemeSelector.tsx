@@ -141,12 +141,18 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
   const { colors } = useTheme();
   const filterFn = useFilter({ sensitivity: 'base' });
   const [triggerClicked, setTriggerClicked] = createSignal(false);
+  const [inputValue, setInputValue] = createSignal('');
   
   // Get the label for the current theme value
   const getCurrentThemeLabel = () => {
     const currentTheme = themes.find(t => t.value === props.value);
     return currentTheme?.label || props.value;
   };
+  
+  // Initialize input value with current theme label
+  createEffect(() => {
+    setInputValue(getCurrentThemeLabel());
+  });
   
   // Apply dynamic styles for hover and selected states
   createEffect(() => {
@@ -190,6 +196,9 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
   });
 
   const handleInputChange = (details: any) => {
+    // Update the input value for auto-sizing
+    setInputValue(details.inputValue);
+    
     // Only filter if user is typing, not when trigger was clicked
     if (!triggerClicked()) {
       filter(details.inputValue);
@@ -216,29 +225,43 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
       inputValue={getCurrentThemeLabel()}
       onValueChange={handleValueChange}
       onInputValueChange={handleInputChange}
-      class="min-w-200px"
       multiple={false}
     >
-      <Combobox.Control class="relative flex items-center">
-        <Combobox.Input
-          class="rounded-6px pr-32px pl-12px py-8px text-14px w-full cursor-pointer focus:outline-none focus:cursor-text transition-border-color"
+      <Combobox.Control class="relative inline-flex items-center">
+        <label 
+          class="inline-grid items-center relative rounded-6px before:content-[attr(data-value)_'_'] before:invisible before:whitespace-pre-wrap before:px-12px before:pr-32px before:py-8px before:grid-area-[1/1] before:w-auto before:min-w-160px before:max-w-280px before:font-inherit before:text-14px before:pointer-events-none"
+          data-value={inputValue()}
           style={{
-            'background-color': colors()?.['input.background'] || 'var(--theme-input-background)',
             border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
-            color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
+            transition: 'border-color 0.2s ease',
           }}
-          onFocus={(e) => {
-            const target = e.target as HTMLInputElement;
-            target.style.borderColor = colors()?.['focusBorder'] || 'var(--theme-focusBorder)';
-          }}
-          onBlur={(e) => {
-            const target = e.target as HTMLInputElement;
-            target.style.borderColor = colors()?.['input.border'] || 'var(--theme-input-border)';
-          }}
-          placeholder="Search themes..."
-        />
+        >
+          <Combobox.Input
+            class="text-14px cursor-pointer focus:cursor-text grid-area-[1/1] w-auto min-w-160px max-w-280px px-12px pr-32px py-8px border-none outline-none appearance-none font-inherit rounded-6px bg-transparent transition-background-color"
+            style={{
+              color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
+            }}
+            onFocus={(e) => {
+              const target = e.target as HTMLInputElement;
+              const wrapper = target.parentElement as HTMLLabelElement;
+              if (wrapper) {
+                wrapper.style.borderColor = colors()?.['focusBorder'] || 'var(--theme-focusBorder)';
+              }
+              target.style.backgroundColor = colors()?.['input.background'] || 'var(--theme-input-background)';
+            }}
+            onBlur={(e) => {
+              const target = e.target as HTMLInputElement;
+              const wrapper = target.parentElement as HTMLLabelElement;
+              if (wrapper) {
+                wrapper.style.borderColor = colors()?.['input.border'] || 'var(--theme-input-border)';
+              }
+              target.style.backgroundColor = 'transparent';
+            }}
+            placeholder="Search themes..."
+          />
+        </label>
         <Combobox.Trigger
-          class="absolute right-0 top-0 bottom-0 flex items-center px-8px cursor-pointer border-none"
+          class="absolute right-8px top-1/2 -translate-y-1/2 flex items-center px-8px cursor-pointer border-none z-10"
           style={{
             'background-color': 'transparent',
             color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
@@ -250,7 +273,7 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
       </Combobox.Control>
 
       <Combobox.Positioner>
-        <Combobox.Content class="rounded-6px max-h-300px overflow-y-auto z-1000 shadow-[0_4px_12px_rgba(0,0,0,0.3)] py-4px" style={{
+        <Combobox.Content class="rounded-6px max-h-300px overflow-y-auto z-1000 shadow-[0_4px_12px_rgba(0,0,0,0.3)] py-4px min-w-250px w-max" style={{
           'background-color': colors()?.['dropdown.background'] || 'var(--theme-dropdown-background)',
           border: `1px solid ${colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'}`
         }}>
