@@ -3,7 +3,7 @@ import FullScreenEditor from './components/FullScreenEditor';
 
 function App() {
   return (
-    <div class="app">
+    <div class="h-screen flex flex-col overflow-hidden">
       <TopBar />
       <FullScreenEditor />
     </div>

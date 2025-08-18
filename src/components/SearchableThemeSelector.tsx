@@ -173,35 +173,35 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (
       value={[props.value]}
       onValueChange={handleValueChange}
       onInputValueChange={handleInputChange}
-      class="searchable-theme-selector"
+      class="min-w-200px"
       multiple={false}
     >
-      <Combobox.Control class="theme-selector-control">
+      <Combobox.Control class="relative flex items-center">
         <Combobox.Input
-          class="theme-selector-input"
+          class="bg-[#1a1a1a] border-1 border-[#555] rounded-6px text-white pr-32px pl-12px py-8px text-14px w-full cursor-pointer focus:outline-none focus:border-[#0969da] focus:cursor-text"
           placeholder="Search themes..."
         />
         <Combobox.Trigger
-          class="theme-selector-trigger"
+          class="absolute right-0 top-0 bottom-0 flex items-center px-8px cursor-pointer bg-none border-none"
           onClick={handleTriggerClick}
         >
-          <div class="theme-selector-arrow i-lucide:chevron-down" />
+          <div class="i-lucide:chevron-down text-[#888] w-16px h-16px transition-transform duration-200 data-[state=open]:rotate-180" />
         </Combobox.Trigger>
       </Combobox.Control>
 
       <Combobox.Positioner>
-        <Combobox.Content class="theme-selector-dropdown">
+        <Combobox.Content class="bg-[#1a1a1a] border-1 border-[#555] rounded-6px max-h-300px overflow-y-auto z-1000 shadow-[0_4px_12px_rgba(0,0,0,0.3)] py-4px">
           <For each={collection().items}>
             {(theme) => (
               <Combobox.Item
                 item={theme}
-                class="theme-option"
+                class="flex justify-between items-center px-12px py-8px cursor-pointer text-14px transition-colors duration-100 text-white hover:bg-[#2a2a2a]"
                 data-selected={theme.value === props.value ? '' : undefined}
               >
-                <Combobox.ItemText class="theme-name">
+                <Combobox.ItemText class="flex-1">
                   {theme.label}
                 </Combobox.ItemText>
-                <span class={`theme-category ${theme.category}`}>
+                <span class={`text-12px px-6px py-2px rounded-4px font-500 uppercase tracking-[0.5px] ml-8px ${theme.category === 'dark' ? 'bg-[#2d1b69] text-[#a78bfa]' : 'bg-[#fbbf24] text-[#92400e]'}`}>
                   {theme.category}
                 </span>
               </Combobox.Item>

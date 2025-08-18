@@ -101,8 +101,8 @@ const userId = user.id;
   });
 
   return (
-    <div class="fullscreen-editor">
-      <div class="editor-top-bar">
+    <div class="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] light:from-[#f6f8fa] light:to-white">
+      <div class="h-60px bg-[#2a2a2a] border-b-1 border-[#333] flex items-center gap-16px px-20px flex-shrink-0 z-100 light:bg-[#f6f8fa] light:border-[#d0d7de]">
         <SearchableThemeSelector
           value={theme()}
           onChange={setTheme}
@@ -111,7 +111,7 @@ const userId = user.id;
         <select
           value={language()}
           onChange={(e) => setLanguage(e.target.value)}
-          class="control-select"
+          class="bg-[#1a1a1a] border-1 border-[#555] rounded-6px text-white px-12px py-8px text-14px cursor-pointer focus:outline-none focus:border-[#0969da] light:bg-white light:border-[#d0d7de] light:text-[#1f2328]"
         >
           <optgroup label="Web Languages">
             <option value="html">HTML</option>
@@ -254,26 +254,27 @@ const userId = user.id;
           </optgroup>
         </select>
         
-        <label class="twoslash-toggle">
+        <label class="flex items-center gap-8px text-white text-14px cursor-pointer">
           <input
             type="checkbox"
             checked={enableTwoslash()}
             onChange={(e) => setEnableTwoslash(e.target.checked)}
+            class="w-16px h-16px cursor-pointer"
           />
           TwoSlash
         </label>
       </div>
 
-      <div class="editor-wrapper">
+      <div class="flex-1 flex items-center justify-center overflow-hidden p-20px">
         <div 
           ref={resizableRef}
-          class="resizable-editor"
+          class="relative bg-[#1a1a1a] rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden border-1 border-[#333]"
           style={{
             width: `${editorWidth()}px`,
             height: `${editorHeight()}px`,
           }}
         >
-          <div class="editor-container">
+          <div class="flex-1 overflow-hidden flex flex-col rounded-12px">
             <ShikiCodeMirrorWidget
               value={code()}
               language={language()}
@@ -286,29 +287,29 @@ const userId = user.id;
           </div>
 
           {/* Resize handles */}
-          <div class="resize-handle resize-handle-right" onMouseDown={(e) => handleMouseDown(e, 'right')} />
-          <div class="resize-handle resize-handle-left" onMouseDown={(e) => handleMouseDown(e, 'left')} />
-          <div class="resize-handle resize-handle-bottom" onMouseDown={(e) => handleMouseDown(e, 'bottom')} />
-          <div class="resize-handle resize-handle-top" onMouseDown={(e) => handleMouseDown(e, 'top')} />
-          <div class="resize-handle resize-handle-bottom-right" onMouseDown={(e) => handleMouseDown(e, 'bottom-right')} />
-          <div class="resize-handle resize-handle-bottom-left" onMouseDown={(e) => handleMouseDown(e, 'bottom-left')} />
-          <div class="resize-handle resize-handle-top-right" onMouseDown={(e) => handleMouseDown(e, 'top-right')} />
-          <div class="resize-handle resize-handle-top-left" onMouseDown={(e) => handleMouseDown(e, 'top-left')} />
+          <div class="absolute top-10px bottom-10px right--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'right')} />
+          <div class="absolute top-10px bottom-10px left--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'left')} />
+          <div class="absolute left-10px right-10px bottom--4px h-8px cursor-ns-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'bottom')} />
+          <div class="absolute left-10px right-10px top--4px h-8px cursor-ns-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'top')} />
+          <div class="absolute bottom--4px right--4px w-12px h-12px cursor-nwse-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'bottom-right')} />
+          <div class="absolute bottom--4px left--4px w-12px h-12px cursor-nesw-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'bottom-left')} />
+          <div class="absolute top--4px right--4px w-12px h-12px cursor-nesw-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'top-right')} />
+          <div class="absolute top--4px left--4px w-12px h-12px cursor-nwse-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'top-left')} />
         </div>
       </div>
 
-      <div class="editor-status-bar">
-        <div class="status-left">
-          <span class="status-item">UTF-8</span>
-          <span class="status-item">LF</span>
-          <span class="status-item">{language().toUpperCase()}</span>
+      <div class="h-32px bg-[#2a2a2a] border-t-1 border-[#333] flex items-center justify-between px-20px flex-shrink-0 text-12px text-[#8c8c8c] z-100">
+        <div class="flex items-center gap-16px">
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">UTF-8</span>
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">LF</span>
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">{language().toUpperCase()}</span>
         </div>
-        <div class="status-center">
-          <span class="status-item">Ready</span>
+        <div class="flex items-center gap-16px">
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">Ready</span>
         </div>
-        <div class="status-right">
-          <span class="status-item">Ln 1, Col 1</span>
-          <span class="status-item">{editorWidth()} × {editorHeight()}</span>
+        <div class="flex items-center gap-16px">
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">Ln 1, Col 1</span>
+          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">{editorWidth()} × {editorHeight()}</span>
         </div>
       </div>
     </div>
