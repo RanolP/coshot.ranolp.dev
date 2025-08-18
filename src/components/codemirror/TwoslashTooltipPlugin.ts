@@ -14,6 +14,7 @@ import { updateShikiConfig } from './ShikiEditorPlugin';
 import type { NodeHover, NodeCompletion, NodeError, NodeQuery } from 'twoslash';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { BundledLanguage, BundledTheme } from 'shiki';
+import { getThemeColors } from '../../utils/themeColors';
 
 interface TwoslashTooltipConfig {
   highlighter?: ShikiHighlighter;
@@ -195,17 +196,25 @@ function createQueryTooltipDOM(
   let borderColor = '#d1d5db';
   let textColor = '#1f2937';
   
-  if (highlighter && highlighter.isInitialized() && theme) {
-    const colors = highlighter.getThemeColors(theme);
-    bgColor = colors.bg;
-    borderColor = colors.border;
-    textColor = colors.fg;
-  } else {
-    // Fallback to simple dark/light detection
-    const isDark = theme && theme.includes('dark');
-    bgColor = isDark ? '#1e1e1e' : '#ffffff';
-    borderColor = isDark ? '#454545' : '#d1d5db';
-    textColor = isDark ? '#d4d4d4' : '#1f2937';
+  if (theme) {
+    // Get theme colors asynchronously for better accuracy
+    getThemeColors(theme).then(colors => {
+      const elements = document.querySelectorAll('.cm-twoslash-tooltip');
+      elements.forEach((el: Element) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.backgroundColor = colors['tooltip.background'];
+        htmlEl.style.color = colors['tooltip.foreground'];
+        htmlEl.style.border = `1px solid ${colors['tooltip.border']}`;
+      });
+    });
+    
+    // Use basic colors as immediate fallback
+    if (highlighter && highlighter.isInitialized()) {
+      const basicColors = highlighter.getBasicThemeColors(theme);
+      bgColor = basicColors.bg;
+      borderColor = basicColors.border;
+      textColor = basicColors.fg;
+    }
   }
   
   const shadowColor = highlighter?.isColorDark(bgColor) ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
@@ -519,17 +528,23 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
           let borderColor = '#d1d5db';
           let textColor = '#1f2937';
           
-          if (config.highlighter && config.highlighter.isInitialized() && currentTheme) {
-            const colors = config.highlighter.getThemeColors(currentTheme);
-            bgColor = colors.bg;
-            borderColor = colors.border;
-            textColor = colors.fg;
-          } else {
-            // Fallback to simple dark/light detection
-            const isDark = currentTheme && currentTheme.includes('dark');
-            bgColor = isDark ? '#1e1e1e' : '#ffffff';
-            borderColor = isDark ? '#454545' : '#d1d5db';
-            textColor = isDark ? '#d4d4d4' : '#1f2937';
+          // Use async to get theme colors, but apply them when available
+          if (currentTheme) {
+            getThemeColors(currentTheme).then(colors => {
+              dom.style.backgroundColor = colors['tooltip.background'];
+              dom.style.color = colors['tooltip.foreground'];
+              dom.style.border = `1px solid ${colors['tooltip.border']}`;
+            }).catch(() => {
+              // Fallback already applied
+            });
+            
+            // Apply basic colors synchronously as fallback
+            if (config.highlighter && config.highlighter.isInitialized()) {
+              const basicColors = config.highlighter.getBasicThemeColors(currentTheme);
+              bgColor = basicColors.bg;
+              borderColor = basicColors.border;
+              textColor = basicColors.fg;
+            }
           }
 
           // Apply styles
@@ -631,15 +646,41 @@ function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighli
   let borderColor = '#d1d5db';
   let bgColor = '#ffffff';
   
+  // Get theme colors asynchronously for better accuracy
+  getThemeColors(theme).then(colors => {
+    borderColor = colors['tooltip.border'];
+    bgColor = colors['tooltip.background'];
+    
+    // Update the style element with new colors
+    const styleContent = `
+      .cm-tooltip-arrow:before {
+        border-color: transparent transparent ${borderColor} transparent !important;
+      }
+      .cm-tooltip-arrow:after {
+        border-color: transparent transparent ${bgColor} transparent !important;
+      }
+      .cm-tooltip-above .cm-tooltip-arrow:before {
+        border-color: ${borderColor} transparent transparent transparent !important;
+      }
+      .cm-tooltip-above .cm-tooltip-arrow:after {
+        border-color: ${bgColor} transparent transparent transparent !important;
+      }
+    `;
+    
+    let styleElement = document.getElementById('twoslash-tooltip-arrow-styles') as HTMLStyleElement;
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'twoslash-tooltip-arrow-styles';
+      document.head.appendChild(styleElement);
+    }
+    styleElement.textContent = styleContent;
+  });
+  
+  // Use basic colors as immediate fallback
   if (highlighter && highlighter.isInitialized()) {
-    const colors = highlighter.getThemeColors(theme);
-    borderColor = colors.border;
-    bgColor = colors.bg;
-  } else {
-    // Fallback to simple dark/light detection
-    const isDark = theme && theme.includes('dark');
-    borderColor = isDark ? '#454545' : '#d1d5db';
-    bgColor = isDark ? '#1e1e1e' : '#ffffff';
+    const basicColors = highlighter.getBasicThemeColors(theme);
+    borderColor = basicColors.border;
+    bgColor = basicColors.bg;
   }
   
   // Remove existing style element if it exists

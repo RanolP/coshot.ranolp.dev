@@ -4,8 +4,10 @@ import type { BundledTheme } from 'shiki';
 import ShikiCodeMirrorWidget from './codemirror/ShikiCodeMirrorWidget';
 import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
 import SearchableThemeSelector from './SearchableThemeSelector';
+import { useTheme } from '../contexts/ThemeContext';
 
 const FullScreenEditor: Component = () => {
+  const { theme, setTheme, colors } = useTheme();
   const [code, setCode] = createSignal(`// Welcome to Coshot - TypeScript playground with TwoSlash support
 interface User {
   id: number;
@@ -34,11 +36,9 @@ const userId = user.id;
 // greetUser({ id: "not-a-number", name: "Bob" });
 `);
 
-  const [theme, setTheme] = createSignal<BundledTheme>('github-dark');
   const [language, setLanguage] = createSignal<string>('typescript');
   const [enableTwoslash, setEnableTwoslash] = createSignal(true);
-  const [editorWidth, setEditorWidth] = createSignal(900);
-  const [editorHeight, setEditorHeight] = createSignal(600);
+  const [editorWidth, setEditorWidth] = createSignal<number | null>(null);
   const [isResizing, setIsResizing] = createSignal(false);
 
   let highlighterInstance: ShikiHighlighter | undefined;
@@ -63,22 +63,22 @@ const userId = user.id;
     setIsResizing(true);
     
     const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = editorWidth();
-    const startHeight = editorHeight();
+    let startWidth = editorWidth();
+    
+    // If width is null (auto mode), get the current actual width from the element
+    if (startWidth === null && resizableRef) {
+      startWidth = resizableRef.offsetWidth;
+      // Set this as the initial fixed width
+      setEditorWidth(startWidth);
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (direction.includes('right')) {
-        setEditorWidth(Math.max(400, startWidth + (e.clientX - startX) * 2));
+      const currentWidth = startWidth || 900;
+      if (direction === 'right') {
+        setEditorWidth(Math.max(400, currentWidth + (e.clientX - startX) * 2));
       }
-      if (direction.includes('left')) {
-        setEditorWidth(Math.max(400, startWidth - (e.clientX - startX) * 2));
-      }
-      if (direction.includes('bottom')) {
-        setEditorHeight(Math.max(300, startHeight + (e.clientY - startY) * 2));
-      }
-      if (direction.includes('top')) {
-        setEditorHeight(Math.max(300, startHeight - (e.clientY - startY) * 2));
+      if (direction === 'left') {
+        setEditorWidth(Math.max(400, currentWidth - (e.clientX - startX) * 2));
       }
     };
 
@@ -93,16 +93,22 @@ const userId = user.id;
   };
 
   onMount(() => {
-    // Set initial size based on viewport
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    setEditorWidth(Math.min(900, vw * 0.8));
-    setEditorHeight(Math.min(600, vh * 0.7));
+    // Start with auto width (null)
+    // Width will be set when user drags resize handles
   });
 
   return (
-    <div class="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] light:from-[#f6f8fa] light:to-white">
-      <div class="h-60px bg-[#2a2a2a] border-b-1 border-[#333] flex items-center gap-16px px-20px flex-shrink-0 z-100 light:bg-[#f6f8fa] light:border-[#d0d7de]">
+    <div 
+      class="flex-1 flex flex-col overflow-hidden"
+      style={{ 'background-color': colors()?.['editor.background'] || 'var(--theme-editor-background)' }}
+    >
+      <div 
+        class="h-60px flex items-center gap-16px px-20px flex-shrink-0 z-100"
+        style={{
+          'background-color': colors()?.['activityBar.background'] || 'var(--theme-activityBar-background)',
+          'border-bottom': `1px solid ${colors()?.['activityBar.border'] || 'var(--theme-activityBar-border)'}`
+        }}
+      >
         <SearchableThemeSelector
           value={theme()}
           onChange={setTheme}
@@ -111,7 +117,12 @@ const userId = user.id;
         <select
           value={language()}
           onChange={(e) => setLanguage(e.target.value)}
-          class="bg-[#1a1a1a] border-1 border-[#555] rounded-6px text-white px-12px py-8px text-14px cursor-pointer focus:outline-none focus:border-[#0969da] light:bg-white light:border-[#d0d7de] light:text-[#1f2328]"
+          class="rounded-6px px-12px py-8px text-14px cursor-pointer focus:outline-none"
+          style={{
+            'background-color': colors()?.['input.background'] || 'var(--theme-input-background)',
+            border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
+            color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
+          }}
         >
           <optgroup label="Web Languages">
             <option value="html">HTML</option>
@@ -254,7 +265,10 @@ const userId = user.id;
           </optgroup>
         </select>
         
-        <label class="flex items-center gap-8px text-white text-14px cursor-pointer">
+        <label 
+          class="flex items-center gap-8px text-14px cursor-pointer"
+          style={{ color: colors()?.['activityBar.foreground'] || 'var(--theme-activityBar-foreground)' }}
+        >
           <input
             type="checkbox"
             checked={enableTwoslash()}
@@ -263,15 +277,38 @@ const userId = user.id;
           />
           TwoSlash
         </label>
+        
+        {editorWidth() !== null && (
+          <button
+            class="px-12px py-6px rounded-6px text-14px cursor-pointer transition-all"
+            style={{
+              'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
+              border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
+              color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
+            }}
+            onClick={() => setEditorWidth(null)}
+            title="Reset to auto width"
+          >
+            Reset Width
+          </button>
+        )}
       </div>
 
-      <div class="flex-1 flex items-center justify-center overflow-hidden p-20px">
+      <div 
+        class="flex-1 flex items-center justify-center overflow-hidden p-20px"
+        style={{ 'background-color': colors()?.['editor.background'] || 'var(--theme-editor-background)' }}
+      >
         <div 
           ref={resizableRef}
-          class="relative bg-[#1a1a1a] rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden border-1 border-[#333]"
+          class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
           style={{
-            width: `${editorWidth()}px`,
-            height: `${editorHeight()}px`,
+            'background-color': colors()?.['panel.background'] || 'var(--theme-panel-background)',
+            border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
+            width: editorWidth() !== null ? `${editorWidth()}px` : 'fit-content',
+            'max-width': editorWidth() === null ? '90vw' : undefined,
+            'min-width': '400px',
+            'max-height': '80vh',
+            height: 'auto'
           }}
         >
           <div class="flex-1 overflow-hidden flex flex-col rounded-12px">
@@ -283,33 +320,37 @@ const userId = user.id;
               onThemeChange={setTheme}
               enableTwoslash={enableTwoslash()}
               showThemeSelector={false}
+              lineWrapping={editorWidth() !== null}
             />
           </div>
 
-          {/* Resize handles */}
+          {/* Resize handles - always shown, dragging sets fixed width */}
           <div class="absolute top-10px bottom-10px right--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'right')} />
           <div class="absolute top-10px bottom-10px left--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'left')} />
-          <div class="absolute left-10px right-10px bottom--4px h-8px cursor-ns-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'bottom')} />
-          <div class="absolute left-10px right-10px top--4px h-8px cursor-ns-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'top')} />
-          <div class="absolute bottom--4px right--4px w-12px h-12px cursor-nwse-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'bottom-right')} />
-          <div class="absolute bottom--4px left--4px w-12px h-12px cursor-nesw-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'bottom-left')} />
-          <div class="absolute top--4px right--4px w-12px h-12px cursor-nesw-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'top-right')} />
-          <div class="absolute top--4px left--4px w-12px h-12px cursor-nwse-resize select-none z-10 hover:bg-[rgba(9,105,218,0.5)] hover:rounded-full" onMouseDown={(e) => handleMouseDown(e, 'top-left')} />
         </div>
       </div>
 
-      <div class="h-32px bg-[#2a2a2a] border-t-1 border-[#333] flex items-center justify-between px-20px flex-shrink-0 text-12px text-[#8c8c8c] z-100">
+      <div 
+        class="h-32px flex items-center justify-between px-20px flex-shrink-0 text-12px z-100"
+        style={{
+          'background-color': colors()?.['statusBar.background'] || 'var(--theme-statusBar-background)',
+          'border-top': `1px solid ${colors()?.['statusBar.border'] || 'var(--theme-statusBar-border)'}`,
+          color: colors()?.['statusBar.foreground'] || 'var(--theme-statusBar-foreground)'
+        }}
+      >
         <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">UTF-8</span>
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">LF</span>
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">{language().toUpperCase()}</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">UTF-8</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">LF</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">{language().toUpperCase()}</span>
         </div>
         <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">Ready</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">Ready</span>
         </div>
         <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">Ln 1, Col 1</span>
-          <span class="flex items-center px-8px h-20px rounded-3px hover:bg-[rgba(255,255,255,0.1)] hover:text-white cursor-default">{editorWidth()} × {editorHeight()}</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">Ln 1, Col 1</span>
+          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">
+            {editorWidth() !== null ? `Width: ${editorWidth()}px` : 'Auto Width'}
+          </span>
         </div>
       </div>
     </div>

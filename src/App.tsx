@@ -1,12 +1,15 @@
 import TopBar from './components/TopBar';
 import FullScreenEditor from './components/FullScreenEditor';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
-    <div class="h-screen flex flex-col overflow-hidden">
-      <TopBar />
-      <FullScreenEditor />
-    </div>
+    <ThemeProvider>
+      <div class="h-screen flex flex-col overflow-hidden">
+        <TopBar />
+        <FullScreenEditor />
+      </div>
+    </ThemeProvider>
   );
 }
 

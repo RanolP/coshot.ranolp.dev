@@ -91,6 +91,7 @@ interface ShikiCodeMirrorWidgetProps {
   className?: string;
   enableTwoslash?: boolean;
   showThemeSelector?: boolean;
+  lineWrapping?: boolean;
 }
 
 const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
@@ -125,7 +126,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       highlighterInstance.isInitialized() &&
       props.theme
     ) {
-      const colors = highlighterInstance.getThemeColors(props.theme);
+      const colors = highlighterInstance.getBasicThemeColors(props.theme);
       setThemeColors(colors);
     }
   };
@@ -257,6 +258,11 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           }
         }),
       ];
+      
+      // Add line wrapping if specified
+      if (props.lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
 
       // Add Shiki highlighting
       const shikiExtensions = shikiEditorPlugin({
@@ -411,10 +417,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         class="editor-container"
         style={{
           flex: '1',
-          'border-radius': '8px 8px 0 0',
+          'border-radius': '8px',
           overflow: 'hidden',
-          border: `1px solid ${themeColors().border}`,
-          'border-bottom': 'none',
           opacity: isLoading() ? '0.5' : '1',
           transition: 'opacity 0.3s',
         }}
@@ -427,9 +431,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             gap: '8px',
             padding: '8px',
             background: themeColors().bg,
-            border: `1px solid ${themeColors().border}`,
-            'border-top': 'none',
-            'border-radius': '0 0 8px 8px',
+            'border-radius': '8px',
+            'margin-top': '8px',
             'flex-shrink': '0',
           }}
         >

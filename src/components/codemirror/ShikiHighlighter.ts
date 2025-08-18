@@ -8,6 +8,7 @@ import {
 } from 'shiki';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { TwoslashCdnReturn } from 'twoslash-cdn';
+import { getThemeColors, type ThemeColors } from '../../utils/themeColors';
 
 export interface ShikiHighlighterOptions {
   themes?: BundledTheme[];
@@ -261,14 +262,17 @@ export class ShikiHighlighter {
   /**
    * Extract theme colors including background, foreground, and other UI colors
    */
-  getThemeColors(themeName: BundledTheme): { 
+  async getThemeColors(themeName: BundledTheme): Promise<ThemeColors> {
+    return await getThemeColors(themeName);
+  }
+  
+  /**
+   * Get basic theme colors synchronously (for backward compatibility)
+   */
+  getBasicThemeColors(themeName: BundledTheme): { 
     bg: string; 
     fg: string; 
     border: string;
-    selection?: string;
-    activeLineHighlight?: string;
-    searchMatch?: string;
-    searchMatchSelected?: string;
   } {
     if (!this.highlighter) {
       return { bg: '#ffffff', fg: '#000000', border: '#e1e4e8' };
@@ -283,25 +287,12 @@ export class ShikiHighlighter {
       const colors = (theme as any).colors || {};
       
       return { 
-        bg, 
-        fg, 
-        // Use actual theme colors if available, otherwise derive from bg
+        bg: bg || colors['editor.background'] || '#ffffff', 
+        fg: fg || colors['editor.foreground'] || '#000000', 
         border: colors['panel.border'] || 
                 colors['editorGroup.border'] || 
                 colors['editor.lineHighlightBorder'] ||
                 this.mixColors(bg, fg, 0.1),
-        selection: colors['editor.selectionBackground'] || 
-                   colors['selection.background'] ||
-                   this.mixColors(bg, '#0066cc', 0.3),
-        activeLineHighlight: colors['editor.lineHighlightBackground'] ||
-                            colors['editor.rangeHighlightBackground'] ||
-                            this.mixColors(bg, fg, 0.05),
-        searchMatch: colors['editor.findMatchBackground'] ||
-                    colors['editor.findMatchHighlightBackground'] ||
-                    '#ffeb3b',
-        searchMatchSelected: colors['editor.findMatchBorder'] ||
-                            colors['editor.findMatchHighlightBorder'] ||
-                            '#ff5722',
       };
     } catch (error) {
       console.warn('Failed to get theme colors:', error);
