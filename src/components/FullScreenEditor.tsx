@@ -109,10 +109,12 @@ const userId = user.id;
           'border-bottom': `1px solid ${colors()?.['activityBar.border'] || 'var(--theme-activityBar-border)'}`
         }}
       >
-        <SearchableThemeSelector
-          value={theme()}
-          onChange={setTheme}
-        />
+        <div class="theme-selector">
+          <SearchableThemeSelector
+            value={theme()}
+            onChange={setTheme}
+          />
+        </div>
         
         <select
           value={language()}
@@ -311,7 +313,7 @@ const userId = user.id;
             height: 'auto'
           }}
         >
-          <div class="flex-1 overflow-hidden flex flex-col rounded-12px">
+          <div class="flex-1 overflow-hidden flex flex-col rounded-12px editor-container">
             <ShikiCodeMirrorWidget
               value={code()}
               language={language()}

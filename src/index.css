@@ -1,6 +1,6 @@
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 400;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -15,6 +15,16 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Ensure consistent line-height for all text elements */
+p, span, div, h1, h2, h3, h4, h5, h6, li, a, button, label {
+  line-height: inherit;
+}
+
+/* Code elements should have tighter line-height */
+code, kbd, pre {
+  line-height: 1.4;
 }
 
 @media (prefers-color-scheme: light) {
