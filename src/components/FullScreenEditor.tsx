@@ -6,6 +6,7 @@ import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
 import { useTheme } from '../contexts/ThemeContext';
 import TwoslashToggle from './TwoslashToggle';
 import { languageDisplayNames } from '../utils/languageNames';
+import ShareModal from './ShareModal';
 
 const FullScreenEditor: Component = () => {
   const { theme, setTheme, colors } = useTheme();
@@ -41,6 +42,7 @@ const userId = user.id;
   const [enableTwoslash, setEnableTwoslash] = createSignal(true);
   const [editorWidth, setEditorWidth] = createSignal<number | null>(null);
   const [isResizing, setIsResizing] = createSignal(false);
+  const [showShareModal, setShowShareModal] = createSignal(false);
 
   let highlighterInstance: ShikiHighlighter | undefined;
   let resizableRef: HTMLDivElement | undefined;
@@ -164,6 +166,21 @@ const userId = user.id;
           {/* Resize handles - always shown, dragging sets fixed width */}
           <div class="absolute top-10px bottom-10px right--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'right')} />
           <div class="absolute top-10px bottom-10px left--4px w-8px cursor-ew-resize select-none z-10 hover:bg-[rgba(9,105,218,0.3)]" onMouseDown={(e) => handleMouseDown(e, 'left')} />
+          
+          {/* Share button - bottom right of editor */}
+          <button
+            onClick={() => setShowShareModal(true)}
+            class="absolute bottom-10px right-10px flex items-center gap-6px px-10px py-6px rounded-6px cursor-pointer transition-all shadow-lg z-20"
+            style={{
+              'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
+              color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)',
+              border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`
+            }}
+            title="Share screenshot"
+          >
+            <div class="i-lucide-share-2 w-16px h-16px" />
+            <span class="text-14px font-medium">Share</span>
+          </button>
         </div>
       </div>
 
@@ -190,6 +207,16 @@ const userId = user.id;
           </span>
         </div>
       </div>
+      
+      <ShareModal
+        isOpen={showShareModal()}
+        onClose={() => setShowShareModal(false)}
+        code={code()}
+        language={language()}
+        theme={theme()}
+        enableTwoslash={enableTwoslash()}
+        editorWidth={editorWidth()}
+      />
     </div>
   );
 };

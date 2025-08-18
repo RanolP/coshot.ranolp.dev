@@ -132,6 +132,7 @@ export class ShikiHighlighter {
     code: string,
     lang: BundledLanguage = 'typescript',
     theme?: BundledTheme,
+    keepNotations: boolean = true,
   ): Promise<HighlightResult> {
     await this.initialize();
 
@@ -180,7 +181,7 @@ export class ShikiHighlighter {
         handbookOptions: {
           noErrorValidation: true,
           noStaticSemanticInfo: false,
-          keepNotations: true,
+          keepNotations: keepNotations,
         },
       });
       console.log(twoslashResult);
