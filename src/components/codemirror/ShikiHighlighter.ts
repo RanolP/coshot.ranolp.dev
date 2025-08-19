@@ -32,6 +32,7 @@ export class ShikiHighlighter {
   private twoslashInstance: TwoslashCdnReturn | null = null;
   private options: ShikiHighlighterOptions;
   private initPromise: Promise<void> | null = null;
+  private twoslashCache = new Map<string, HighlightResult>();
 
   constructor(options: ShikiHighlighterOptions = {}) {
     this.options = {
@@ -140,6 +141,12 @@ export class ShikiHighlighter {
       throw new Error('Highlighter or TwoSlash not initialized');
     }
 
+    // Check cache first
+    const cacheKey = `${code}::${lang}::${theme}::${keepNotations}`;
+    if (this.twoslashCache.has(cacheKey)) {
+      return this.twoslashCache.get(cacheKey)!;
+    }
+
     // Ensure the language is loaded
     await this.loadLanguage(lang);
 
@@ -156,7 +163,16 @@ export class ShikiHighlighter {
     if (!supportsTwoslash) {
       // Just do regular highlighting without TwoSlash
       const lines = await this.tokenize(code, lang, selectedTheme);
-      return { lines };
+      const result = { lines };
+      
+      // Cache this result too
+      if (this.twoslashCache.size > 20) {
+        const firstKey = this.twoslashCache.keys().next().value;
+        this.twoslashCache.delete(firstKey);
+      }
+      this.twoslashCache.set(cacheKey, result);
+      
+      return result;
     }
 
     // TwoSlash expects file extension, not language name
@@ -213,7 +229,16 @@ export class ShikiHighlighter {
       } else {
         // Fall back to regular highlighting
         const lines = await this.tokenize(code, lang, selectedTheme);
-        return { lines };
+        const result = { lines };
+        
+        // Still cache even error fallbacks
+        if (this.twoslashCache.size > 20) {
+          const firstKey = this.twoslashCache.keys().next().value;
+          this.twoslashCache.delete(firstKey);
+        }
+        this.twoslashCache.set(cacheKey, result);
+        
+        return result;
       }
     }
 
@@ -237,10 +262,20 @@ export class ShikiHighlighter {
         : undefined,
     };
 
-    return {
+    const result = {
       lines,
       twoslashData,
     };
+
+    // Cache the result (limit cache size to prevent memory issues)
+    if (this.twoslashCache.size > 20) {
+      // Remove oldest entries
+      const firstKey = this.twoslashCache.keys().next().value;
+      this.twoslashCache.delete(firstKey);
+    }
+    this.twoslashCache.set(cacheKey, result);
+
+    return result;
   }
 
   renderTokensToHtml(tokens: ThemedToken[]): string {

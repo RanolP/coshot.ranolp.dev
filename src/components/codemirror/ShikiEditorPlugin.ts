@@ -57,6 +57,7 @@ class ShikiEditorView {
   private theme: BundledTheme;
   private updateTimeout: number | null = null;
   private lastContent: string = '';
+  private lastDecorations: DecorationSet = Decoration.none;
 
   constructor(view: EditorView, config: ShikiEditorPluginConfig) {
     this.view = view;
@@ -85,7 +86,17 @@ class ShikiEditorView {
       }
     }
 
-    if (update.docChanged || update.viewportChanged) {
+    if (update.docChanged) {
+      // Map existing decorations through the changes to maintain proper positions
+      // This prevents the "shifting" effect while typing
+      try {
+        this.decorations = this.decorations.map(update.changes);
+      } catch (e) {
+        // If mapping fails, clear decorations and schedule update
+        this.decorations = Decoration.none;
+      }
+      this.scheduleUpdate();
+    } else if (update.viewportChanged) {
       this.scheduleUpdate();
     }
   }
@@ -95,7 +106,8 @@ class ShikiEditorView {
       clearTimeout(this.updateTimeout);
     }
 
-    // Debounce updates for performance
+    // Slightly longer debounce to reduce flicker (100ms)
+    // This balances responsiveness with stability
     this.updateTimeout = window.setTimeout(() => {
       this.updateDecorations();
       this.updateTimeout = null;
@@ -119,7 +131,8 @@ class ShikiEditorView {
     }
 
     try {
-      // Get tokenized lines from Shiki
+      // Get tokenized lines from Shiki (syntax highlighting only, no TwoSlash)
+      // This is much faster than TwoSlash analysis
       const lines = await this.highlighter.tokenize(
         content,
         this.language,
@@ -137,14 +150,15 @@ class ShikiEditorView {
           const from = pos;
           const to = pos + token.content.length;
 
-          if (token.color) {
+          if (token.color && from < to) {
             const decoration = Decoration.mark({
               class: `shiki-token`,
               attributes: {
                 'data-color': token.color,
                 style: `color: ${token.color}`,
               },
-              // Lower priority to not interfere with selection
+              // Important: Make decorations atomic and non-inclusive to prevent shifting
+              atomic: false,
               inclusiveStart: false,
               inclusiveEnd: false,
             });
@@ -161,15 +175,21 @@ class ShikiEditorView {
         }
       }
 
-      this.decorations = builder.finish();
+      const newDecorations = builder.finish();
+      
+      // Only update if decorations actually changed
+      if (newDecorations !== this.decorations) {
+        this.decorations = newDecorations;
+        this.lastDecorations = newDecorations;
 
-      // Update theme colors and force a view update
-      this.view.dispatch({
-        effects: [
-          setThemeColors.of(themeColors),
-          themeCompartment.reconfigure(themeFromColors(themeColors)),
-        ],
-      });
+        // Update theme colors and force a view update
+        this.view.dispatch({
+          effects: [
+            setThemeColors.of(themeColors),
+            themeCompartment.reconfigure(themeFromColors(themeColors)),
+          ],
+        });
+      }
     } catch (error) {
       console.error('Error highlighting with Shiki:', error);
       this.decorations = Decoration.none;

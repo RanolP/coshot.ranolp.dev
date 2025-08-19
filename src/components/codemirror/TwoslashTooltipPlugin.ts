@@ -526,7 +526,9 @@ class TwoslashTooltipView {
     }
 
     // Debounce updates for performance with configurable delay
-    const delay = this.config?.delay || 300;
+    // Use longer delay (500ms) for TwoSlash analysis to reduce computation
+    // Note: Syntax highlighting happens separately in ShikiEditorPlugin with 50ms delay
+    const delay = this.config?.delay || 500;
     this.updateTimeout = window.setTimeout(() => {
       this.updateTwoslashData();
       this.updateTimeout = null;
