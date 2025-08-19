@@ -62,7 +62,7 @@ export class ShikiHighlighter {
 
     this.twoslashInstance = createTwoslashFromCDN({
       compilerOptions: {
-        lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+        lib: ['ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', 'ES2021', 'ESNext', 'DOM', 'DOM.Iterable'],
         target: 99, // ESNext
         module: 99, // ESNext
         jsx: 1, // Preserve
@@ -140,10 +140,19 @@ export class ShikiHighlighter {
       throw new Error('Highlighter or TwoSlash not initialized');
     }
 
-    // Check cache first
+    // Check cache first - but only return cached results if they don't have errors
     const cacheKey = `${code}::${lang}::${theme}::${keepNotations}`;
-    if (this.twoslashCache.has(cacheKey)) {
-      return this.twoslashCache.get(cacheKey)!;
+    const cachedResult = this.twoslashCache.get(cacheKey);
+    if (cachedResult) {
+      // Check if the cached result has errors
+      const hasErrors = cachedResult.twoslashData?.nodes?.some(
+        (node: any) => node.type === 'error'
+      );
+      // Only return cached result if it doesn't have errors
+      // This ensures errors are always re-evaluated
+      if (!hasErrors) {
+        return cachedResult;
+      }
     }
 
     // Ensure the language is loaded
@@ -159,7 +168,7 @@ export class ShikiHighlighter {
       const lines = await this.tokenize(code, lang, selectedTheme);
       const result = { lines };
 
-      // Cache this result too
+      // Cache this result (no errors possible in non-TwoSlash highlighting)
       if (this.twoslashCache.size > 20) {
         const firstKey = this.twoslashCache.keys().next().value;
         if (firstKey !== undefined) {
@@ -263,15 +272,20 @@ export class ShikiHighlighter {
       twoslashData,
     };
 
-    // Cache the result (limit cache size to prevent memory issues)
-    if (this.twoslashCache.size > 20) {
-      // Remove oldest entries
-      const firstKey = this.twoslashCache.keys().next().value;
-      if (firstKey !== undefined) {
-        this.twoslashCache.delete(firstKey);
+    // Only cache results that don't have errors
+    // This ensures errors are always fresh and visible
+    const hasErrors = twoslashData.nodes?.some((node: any) => node.type === 'error');
+    if (!hasErrors) {
+      // Cache the result (limit cache size to prevent memory issues)
+      if (this.twoslashCache.size > 20) {
+        // Remove oldest entries
+        const firstKey = this.twoslashCache.keys().next().value;
+        if (firstKey !== undefined) {
+          this.twoslashCache.delete(firstKey);
+        }
       }
+      this.twoslashCache.set(cacheKey, result);
     }
-    this.twoslashCache.set(cacheKey, result);
 
     return result;
   }

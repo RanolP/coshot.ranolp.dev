@@ -15,6 +15,7 @@ import type { NodeHover, NodeCompletion, NodeError, NodeQuery } from 'twoslash';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { getThemeColors } from '../../utils/theme-colors';
+import { micromark } from 'micromark';
 
 interface TwoslashTooltipConfig {
   highlighter?: ShikiHighlighter;
@@ -652,31 +653,38 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
         return null;
       }
 
-      // Create tooltip content
-      let content = '';
-
-      if (errorInfo) {
-        content = `<div class="twoslash-error-tooltip">
-        <div class="error-code">TS${errorInfo.code}</div>
-        <div class="error-message">${escapeHtml(errorInfo.text)}</div>
-      </div>`;
-      } else if (hoverInfo) {
-        const text = hoverInfo.text || '';
-        const docs = hoverInfo.docs || '';
-
-        content = `<div class="twoslash-hover-tooltip">
-        <div class="hover-type">${escapeHtml(text)}</div>
-        ${docs ? `<div class="hover-docs">${escapeHtml(docs)}</div>` : ''}
-      </div>`;
-      }
-
       return {
         pos,
         above: true,
         create() {
-          const dom = document.createElement('div');
-          dom.className = 'cm-twoslash-tooltip';
-          dom.innerHTML = content;
+          let dom: HTMLDivElement;
+
+          if (errorInfo) {
+            dom = (
+              <div class="cm-twoslash-tooltip">
+                <div class="twoslash-error-tooltip">
+                  <div class="error-code">TS{errorInfo.code}</div>
+                  <div class="error-message">{errorInfo.text}</div>
+                </div>
+              </div>
+            ) as HTMLDivElement;
+          } else if (hoverInfo) {
+            const text = hoverInfo.text || '';
+            const docs = hoverInfo.docs || '';
+
+            dom = (
+              <div class="cm-twoslash-tooltip">
+                <div class="twoslash-hover-tooltip">
+                  <div class="hover-type" data-raw-type={text}>
+                    {text}
+                  </div>
+                  {docs && <div class="hover-docs" innerHTML={renderMarkdown(docs)} />}
+                </div>
+              </div>
+            ) as HTMLDivElement;
+          } else {
+            return { dom: document.createElement('div') };
+          }
 
           // Determine colors based on theme
           let bgColor = '#ffffff';
@@ -734,16 +742,60 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
 
           const hoverType = dom.querySelector('.hover-type');
           if (hoverType) {
-            (hoverType as HTMLElement).style.fontFamily = 'monospace';
-            (hoverType as HTMLElement).style.whiteSpace = 'pre-wrap';
+            const typeEl = hoverType as HTMLElement;
+            typeEl.style.fontFamily = 'Monaco, Menlo, "Ubuntu Mono", monospace';
+            typeEl.style.whiteSpace = 'pre-wrap';
+            typeEl.style.lineHeight = '1.4';
+
+            // Apply syntax highlighting to type information
+            const rawType = typeEl.getAttribute('data-raw-type');
+            if (rawType && config.highlighter && config.highlighter.isInitialized()) {
+              // Asynchronously apply syntax highlighting
+              renderHighlightedCode(rawType, config.highlighter, currentTheme)
+                .then((highlightedHtml) => {
+                  typeEl.innerHTML = highlightedHtml;
+                })
+                .catch(() => {
+                  // Keep the plain text on error
+                  typeEl.textContent = rawType;
+                });
+            }
           }
 
           const hoverDocs = dom.querySelector('.hover-docs');
           if (hoverDocs) {
-            (hoverDocs as HTMLElement).style.marginTop = '8px';
-            (hoverDocs as HTMLElement).style.paddingTop = '8px';
-            (hoverDocs as HTMLElement).style.borderTop = '1px solid #454545';
-            (hoverDocs as HTMLElement).style.color = '#9cdcfe';
+            const docsEl = hoverDocs as HTMLElement;
+            docsEl.style.marginTop = '8px';
+            docsEl.style.paddingTop = '8px';
+            docsEl.style.borderTop = '1px solid #454545';
+            docsEl.style.color = '#9cdcfe';
+            docsEl.style.fontSize = '12px';
+            docsEl.style.lineHeight = '1.5';
+
+            // Style markdown elements in hover docs
+            docsEl.querySelectorAll('p').forEach((p) => {
+              p.style.margin = '4px 0';
+            });
+            docsEl.querySelectorAll('code').forEach((code) => {
+              const codeEl = code as HTMLElement;
+              const isDark = config.highlighter?.isColorDark(bgColor);
+              codeEl.style.backgroundColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+              codeEl.style.padding = '1px 4px';
+              codeEl.style.borderRadius = '3px';
+              codeEl.style.fontFamily = 'Monaco, Menlo, "Ubuntu Mono", monospace';
+              codeEl.style.fontSize = '11px';
+            });
+            docsEl.querySelectorAll('a').forEach((a) => {
+              (a as HTMLElement).style.color = '#9cdcfe';
+              (a as HTMLElement).style.textDecoration = 'underline';
+            });
+            docsEl.querySelectorAll('ul, ol').forEach((list) => {
+              (list as HTMLElement).style.marginLeft = '20px';
+              (list as HTMLElement).style.margin = '4px 0 4px 20px';
+            });
+            docsEl.querySelectorAll('li').forEach((li) => {
+              (li as HTMLElement).style.margin = '2px 0';
+            });
           }
 
           return { dom };
@@ -762,6 +814,17 @@ function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Helper function to render markdown to HTML
+function renderMarkdown(text: string): string {
+  try {
+    // Use micromark to render markdown to HTML
+    return micromark(text);
+  } catch (error) {
+    // Fallback to escaped HTML if markdown parsing fails
+    return `<p>${escapeHtml(text)}</p>`;
+  }
 }
 
 // Create underline decorations for errors
@@ -929,28 +992,4 @@ export function twoslashTooltipPlugin(config: TwoslashTooltipConfig = {}): Exten
       },
     }),
   ];
-}
-
-// Helper to create the complete TwoSlash extension
-async function createTwoslashExtension(
-  config: {
-    language?: BundledLanguage;
-    themes?: string[];
-    langs?: string[];
-    delay?: number;
-  } = {},
-): Promise<Extension[]> {
-  const highlighter = new ShikiHighlighter({
-    themes: config.themes as any,
-    langs: config.langs as any,
-  });
-
-  // Pre-initialize the highlighter
-  await highlighter.initialize();
-
-  return twoslashTooltipPlugin({
-    highlighter,
-    language: config.language,
-    delay: config.delay,
-  });
 }

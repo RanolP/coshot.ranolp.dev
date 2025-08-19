@@ -25,6 +25,7 @@
     "@shikijs/twoslash": "^3.9.2",
     "codemirror": "^6.0.2",
     "html2canvas": "^1.4.1",
+    "micromark": "^4.0.2",
     "shiki": "^3.9.2",
     "solid-js": "^1.9.8",
     "twoslash-cdn": "^0.3.4"
