@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import { useTheme } from '../contexts/ThemeContext';
 import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
 import type { BundledLanguage, BundledTheme } from 'shiki';
+import Knob from './Knob';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -407,7 +408,15 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
   return (
     <Show when={props.isOpen}>
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4">
+      <div 
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4"
+        onClick={(e) => {
+          // Only close if clicking the backdrop itself, not the modal content
+          if (e.target === e.currentTarget) {
+            props.onClose();
+          }
+        }}
+      >
         <div 
           class="rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           style={{
@@ -426,7 +435,9 @@ const ShareModal: Component<ShareModalProps> = (props) => {
               onClick={props.onClose}
               class="p-1 rounded-lg transition-colors"
               style={{
-                'background-color': 'transparent'
+                'background-color': 'transparent',
+                outline: 'none',
+                border: 'none'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = colors()?.['list.hoverBackground'] || 'var(--theme-list-hoverBackground)';
@@ -511,25 +522,21 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 Editor Width: {props.editorWidth ? `${props.editorWidth}px` : 'Auto'}
               </div>
               
-              <div>
-                <label class="block text-sm font-medium mb-2">Scale</label>
-                <input
-                  type="range"
-                  min="1"
-                  max="4"
-                  step="0.5"
+              <div class="flex justify-center mb-4">
+                <Knob
                   value={options().scale}
-                  onInput={(e) => setOptions({ ...options(), scale: parseFloat(e.currentTarget.value) })}
-                  class="w-full"
+                  onChange={(value) => setOptions({ ...options(), scale: value })}
+                  min={1}
+                  max={4}
+                  step={0.5}
+                  size={56}
+                  label="Scale"
+                  format={(v) => `${v}x`}
                 />
-                <span 
-                  class="text-sm"
-                  style={{ color: colors()?.['descriptionForeground'] || 'var(--theme-descriptionForeground)' }}
-                >{options().scale}x</span>
               </div>
 
               <div>
-                <label class="flex items-center gap-2 mb-2">
+                <label class="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={options().transparentBackground}
@@ -537,34 +544,19 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                   />
                   <span class="text-sm font-medium">Transparent Background</span>
                 </label>
-                <Show when={!options().transparentBackground}>
-                  <input
-                    type="color"
-                    value={options().backgroundColor}
-                    onInput={(e) => setOptions({ ...options(), backgroundColor: e.currentTarget.value })}
-                    class="w-full h-10 rounded"
-                    style={{
-                      border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`
-                    }}
-                  />
-                </Show>
               </div>
 
-              <div>
-                <label class="block text-sm font-medium mb-2">Padding (px)</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="64"
-                  step="8"
+              <div class="flex justify-center mb-4">
+                <Knob
                   value={options().padding}
-                  onInput={(e) => setOptions({ ...options(), padding: parseInt(e.currentTarget.value) })}
-                  class="w-full"
+                  onChange={(value) => setOptions({ ...options(), padding: value })}
+                  min={0}
+                  max={64}
+                  step={8}
+                  size={56}
+                  label="Padding"
+                  format={(v) => `${v}px`}
                 />
-                <span 
-                  class="text-sm"
-                  style={{ color: colors()?.['descriptionForeground'] || 'var(--theme-descriptionForeground)' }}
-                >{options().padding}px</span>
               </div>
 
               <div>
