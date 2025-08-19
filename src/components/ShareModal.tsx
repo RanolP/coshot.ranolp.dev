@@ -450,9 +450,91 @@ const ShareModal: Component<ShareModalProps> = (props) => {
             </button>
           </div>
 
-          <div class="flex flex-1 overflow-hidden">
-            {/* Preview Section */}
-            <div class="flex-1 p-4 overflow-auto flex items-center justify-center">
+          <div class="flex flex-col flex-1 overflow-hidden">
+            {/* Settings Bar at Top */}
+            <div class="px-4 py-3 border-b flex items-center gap-6 overflow-x-auto flex-shrink-0" style={{
+              'border-color': colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'
+            }}>
+              <Knob
+                value={options().scale}
+                onChange={(value) => setOptions({ ...options(), scale: value })}
+                min={1}
+                max={4}
+                step={0.5}
+                size={56}
+                label="Scale"
+                format={(v) => `${v}x`}
+              />
+
+              <Knob
+                value={options().padding}
+                onChange={(value) => setOptions({ ...options(), padding: value })}
+                min={0}
+                max={64}
+                step={8}
+                size={56}
+                label="Padding"
+                format={(v) => `${v}px`}
+              />
+
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={options().transparentBackground}
+                  onChange={(e) => setOptions({ ...options(), transparentBackground: e.currentTarget.checked })}
+                />
+                <span class="text-sm">Transparent</span>
+              </label>
+
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={options().showLineNumbers}
+                  onChange={(e) => setOptions({ ...options(), showLineNumbers: e.currentTarget.checked })}
+                />
+                <span class="text-sm">Line Numbers</span>
+              </label>
+
+              <div class="flex items-center gap-2">
+                <label class="text-sm">Format:</label>
+                <select
+                  value={options().format}
+                  onChange={(e) => setOptions({ ...options(), format: e.currentTarget.value as 'png' | 'jpeg' })}
+                  class="px-2 py-1 rounded text-sm"
+                  style={{
+                    'background-color': colors()?.['input.background'] || 'var(--theme-input-background)',
+                    border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
+                    color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
+                  }}
+                >
+                  <option value="png">PNG</option>
+                  <option value="jpeg">JPEG</option>
+                </select>
+              </div>
+
+              <Show when={options().format === 'jpeg'}>
+                <div class="flex items-center gap-2">
+                  <label class="text-sm">Quality:</label>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.05"
+                    value={options().quality}
+                    onInput={(e) => setOptions({ ...options(), quality: parseFloat(e.currentTarget.value) })}
+                    class="w-20"
+                  />
+                  <span class="text-sm opacity-70">{Math.round(options().quality * 100)}%</span>
+                </div>
+              </Show>
+
+              <div class="ml-auto text-xs opacity-50">
+                Width: {props.editorWidth ? `${props.editorWidth}px` : 'Auto'}
+              </div>
+            </div>
+
+            {/* Preview Section - Full Width */}
+            <div class="flex-1 p-4 overflow-auto flex items-center justify-center relative">
               <div 
                 ref={containerRef}
                 class="relative inline-block"
@@ -473,9 +555,9 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                     padding: '16px',
                     'border-radius': '8px',
                     position: 'relative',
-                    width: props.editorWidth ? `${props.editorWidth}px` : 'fit-content',
+                    width: 'fit-content',
                     'min-width': '400px',
-                    'overflow-x': props.editorWidth ? 'auto' : 'visible'
+                    'max-width': '100%'
                   }}
                 />
                 
@@ -510,114 +592,20 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                   )}
                 </For>
               </div>
-            </div>
 
-            {/* Options Section */}
-            <div class="w-80 p-4 space-y-4 overflow-auto flex-shrink-0" style={{
-              'border-left': `1px solid ${colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'}`
-            }}>
-              <div class="text-xs opacity-70 pb-2 border-b" style={{
-                'border-color': colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'
-              }}>
-                Editor Width: {props.editorWidth ? `${props.editorWidth}px` : 'Auto'}
-              </div>
-              
-              <div class="flex justify-center mb-4">
-                <Knob
-                  value={options().scale}
-                  onChange={(value) => setOptions({ ...options(), scale: value })}
-                  min={1}
-                  max={4}
-                  step={0.5}
-                  size={56}
-                  label="Scale"
-                  format={(v) => `${v}x`}
-                />
-              </div>
-
-              <div>
-                <label class="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={options().transparentBackground}
-                    onChange={(e) => setOptions({ ...options(), transparentBackground: e.currentTarget.checked })}
-                  />
-                  <span class="text-sm font-medium">Transparent Background</span>
-                </label>
-              </div>
-
-              <div class="flex justify-center mb-4">
-                <Knob
-                  value={options().padding}
-                  onChange={(value) => setOptions({ ...options(), padding: value })}
-                  min={0}
-                  max={64}
-                  step={8}
-                  size={56}
-                  label="Padding"
-                  format={(v) => `${v}px`}
-                />
-              </div>
-
-              <div>
-                <label class="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={options().showLineNumbers}
-                    onChange={(e) => setOptions({ ...options(), showLineNumbers: e.currentTarget.checked })}
-                  />
-                  <span class="text-sm font-medium">Show Line Numbers</span>
-                </label>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium mb-2">Format</label>
-                <select
-                  value={options().format}
-                  onChange={(e) => setOptions({ ...options(), format: e.currentTarget.value as 'png' | 'jpeg' })}
-                  class="w-full px-3 py-2 rounded-lg"
-                  style={{
-                    'background-color': colors()?.['input.background'] || 'var(--theme-input-background)',
-                    border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
-                    color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
-                  }}
-                >
-                  <option value="png">PNG</option>
-                  <option value="jpeg">JPEG</option>
-                </select>
-              </div>
-
-              <Show when={options().format === 'jpeg'}>
-                <div>
-                  <label class="block text-sm font-medium mb-2">Quality</label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1"
-                    step="0.05"
-                    value={options().quality}
-                    onInput={(e) => setOptions({ ...options(), quality: parseFloat(e.currentTarget.value) })}
-                    class="w-full"
-                  />
-                  <span 
-                    class="text-sm"
-                    style={{ color: colors()?.['descriptionForeground'] || 'var(--theme-descriptionForeground)' }}
-                  >{Math.round(options().quality * 100)}%</span>
-                </div>
-              </Show>
-
-              <Show when={tooltips().length > 0}>
-                <div class="text-xs opacity-70">
-                  <div class="i-lucide-info w-3 h-3 inline-block mr-1" />
-                  Drag tooltips to reposition them
-                </div>
-              </Show>
-
-              <div class="flex gap-2 pt-4">
+              {/* Action Buttons - Bottom Right */}
+              <div class="absolute bottom-4 right-4 flex gap-2">
+                <Show when={tooltips().length > 0}>
+                  <div class="text-xs opacity-70 self-center mr-2">
+                    <div class="i-lucide-info w-3 h-3 inline-block mr-1" />
+                    Drag tooltips to reposition
+                  </div>
+                </Show>
+                
                 <button
                   onClick={handleCapture}
                   disabled={isCapturing()}
-                  class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   style={{
                     'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
                     color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
@@ -629,7 +617,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 <button
                   onClick={handleCopyToClipboard}
                   disabled={isCapturing()}
-                  class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   style={{
                     'background-color': colors()?.['button.secondaryBackground'] || colors()?.['button.background'] || 'var(--theme-button-background)',
                     color: colors()?.['button.secondaryForeground'] || colors()?.['button.foreground'] || 'var(--theme-button-foreground)'

@@ -112,40 +112,46 @@ const userId = user.id;
           'border-bottom': `1px solid ${colors()?.['activityBar.border'] || 'var(--theme-activityBar-border)'}`
         }}
       >
-        
-        {editorWidth() !== null && (
-          <button
-            class="px-12px py-6px rounded-6px text-14px cursor-pointer transition-all"
-            style={{
-              'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
-              border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
-              color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
-            }}
-            onClick={() => setEditorWidth(null)}
-            title="Reset to auto width"
-          >
-            Reset Width
-          </button>
-        )}
       </div>
 
       <div 
-        class="flex-1 flex items-center justify-center overflow-hidden p-20px"
+        class="flex-1 flex flex-col items-center justify-center overflow-hidden p-20px"
         style={{ 'background-color': colors()?.['editor.background'] || 'var(--theme-editor-background)' }}
       >
-        <div 
-          ref={resizableRef}
-          class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
-          style={{
-            'background-color': colors()?.['panel.background'] || 'var(--theme-panel-background)',
-            border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
-            width: editorWidth() !== null ? `${editorWidth()}px` : 'fit-content',
-            'max-width': editorWidth() === null ? '90vw' : undefined,
-            'min-width': '400px',
-            'max-height': '80vh',
-            height: 'auto'
-          }}
-        >
+        {/* Container for button and editor */}
+        <div class="relative">
+          {/* Reset Width Button - positioned above editor */}
+          {editorWidth() !== null && (
+            <button
+              class="absolute px-10px py-4px rounded-6px text-12px cursor-pointer transition-all z-20"
+              style={{
+                'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
+                border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
+                color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)',
+                top: '-30px',
+                right: '0',
+              }}
+              onClick={() => setEditorWidth(null)}
+              title="Reset to auto width"
+            >
+              <div class="i-lucide-maximize-2 w-12px h-12px inline-block mr-4px" />
+              Auto Width
+            </button>
+          )}
+          
+          <div 
+            ref={resizableRef}
+            class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
+            style={{
+              'background-color': colors()?.['panel.background'] || 'var(--theme-panel-background)',
+              border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
+              width: editorWidth() !== null ? `${editorWidth()}px` : 'fit-content',
+              'max-width': editorWidth() === null ? '90vw' : undefined,
+              'min-width': '400px',
+              'max-height': '80vh',
+              height: 'auto'
+            }}
+          >
           <div class="flex-1 overflow-hidden flex flex-col rounded-12px editor-container">
             <ShikiCodeMirrorWidget
               value={code()}
@@ -181,6 +187,7 @@ const userId = user.id;
             <div class="i-lucide-share-2 w-16px h-16px" />
             <span class="text-14px font-medium">Share</span>
           </button>
+          </div>
         </div>
       </div>
 

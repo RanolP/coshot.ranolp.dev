@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glass effect -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <!-- Main rounded square background -->
+  <rect x="2" y="2" width="28" height="28" rx="6" ry="6" fill="url(#bgGrad)" />
+  
+  <!-- Code window frame -->
+  <rect x="6" y="8" width="20" height="16" rx="2" ry="2" fill="#1e1e2e" opacity="0.9" filter="url(#shadow)" />
+  
+  <!-- Window dots -->
+  <circle cx="9" cy="11" r="0.8" fill="#ff5f56" />
+  <circle cx="12" cy="11" r="0.8" fill="#ffbd2e" />
+  <circle cx="15" cy="11" r="0.8" fill="#27c93f" />
+  
+  <!-- Code lines -->
+  <rect x="8" y="14" width="8" height="1" rx="0.5" fill="#61afef" opacity="0.9" />
+  <rect x="17" y="14" width="4" height="1" rx="0.5" fill="#e06c75" opacity="0.9" />
+  <rect x="8" y="16.5" width="6" height="1" rx="0.5" fill="#98c379" opacity="0.9" />
+  <rect x="15" y="16.5" width="5" height="1" rx="0.5" fill="#c678dd" opacity="0.9" />
+  <rect x="8" y="19" width="10" height="1" rx="0.5" fill="#56b6c2" opacity="0.9" />
+  <rect x="19" y="19" width="3" height="1" rx="0.5" fill="#e5c07b" opacity="0.9" />
+  <rect x="8" y="21.5" width="7" height="1" rx="0.5" fill="#61afef" opacity="0.9" />
+  
+  <!-- Camera/Screenshot icon overlay -->
+  <g transform="translate(20, 20)">
+    <!-- Camera body -->
+    <rect x="0" y="2" width="10" height="8" rx="1" fill="#ffffff" opacity="0.95" filter="url(#shadow)" />
+    <rect x="2" y="4" width="6" height="4" rx="2" fill="#667eea" />
+    <!-- Camera lens -->
+    <circle cx="5" cy="6" r="1.5" fill="#ffffff" opacity="0.8" />
+    <!-- Flash -->
+    <rect x="1" y="0.5" width="2" height="1" rx="0.5" fill="#ffffff" opacity="0.9" />
+  </g>
+  
+  <!-- Glass overlay effect -->
+  <rect x="2" y="2" width="28" height="28" rx="6" ry="6" fill="url(#glassGrad)" opacity="0.5" />
+</svg>
