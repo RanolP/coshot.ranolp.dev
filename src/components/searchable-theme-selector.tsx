@@ -174,9 +174,6 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (props)
         background-color: ${themeColors['list.activeSelectionBackground']} !important;
         color: ${themeColors['list.activeSelectionForeground']} !important;
       }
-      .theme-selector-item[data-selected] .theme-category-badge {
-        opacity: 0.8 !important;
-      }
     `;
   });
 
@@ -281,7 +278,7 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (props)
             {(theme) => (
               <Combobox.Item
                 item={theme}
-                class="theme-selector-item flex justify-between items-center px-12px py-8px cursor-pointer text-13px transition-colors duration-100"
+                class="theme-selector-item flex items-center px-12px py-8px cursor-pointer text-13px transition-colors duration-100"
                 style={{
                   color:
                     colors()?.['list.inactiveSelectionForeground'] ||
@@ -290,18 +287,21 @@ const SearchableThemeSelector: Component<SearchableThemeSelectorProps> = (props)
                 }}
                 data-selected={theme.value === props.value ? '' : undefined}
               >
-                <Combobox.ItemText class="flex-1">{theme.label}</Combobox.ItemText>
-                <span
-                  class="theme-category-badge text-12px px-6px py-2px rounded-4px font-500 uppercase tracking-[0.5px] ml-8px"
+                <div
+                  class={
+                    theme.category === 'dark'
+                      ? 'i-lucide:moon w-16px h-16px mr-8px flex-shrink-0'
+                      : 'i-lucide:sun w-16px h-16px mr-8px flex-shrink-0'
+                  }
                   style={{
-                    'background-color':
-                      colors()?.['badge.background'] || 'var(--theme-badge-background)',
-                    color: colors()?.['badge.foreground'] || 'var(--theme-badge-foreground)',
-                    opacity: theme.category === 'dark' ? '0.9' : '0.7',
+                    color:
+                      theme.category === 'dark'
+                        ? '#9CA3AF' // Soft gray for moon
+                        : '#F59E0B', // Amber/yellow for sun
                   }}
-                >
-                  {theme.category}
-                </span>
+                  title={theme.category === 'dark' ? 'Dark theme' : 'Light theme'}
+                />
+                <Combobox.ItemText class="flex-1">{theme.label}</Combobox.ItemText>
               </Combobox.Item>
             )}
           </For>
