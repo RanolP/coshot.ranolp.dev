@@ -7,7 +7,7 @@ import {
   showTooltip,
 } from '@codemirror/view';
 import type { DecorationSet, Tooltip } from '@codemirror/view';
-import { StateField, StateEffect, RangeSetBuilder } from '@codemirror/state';
+import { StateField, StateEffect, RangeSetBuilder, EditorState } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
 import { ShikiHighlighter } from './ShikiHighlighter';
 import { updateShikiConfig } from './ShikiEditorPlugin';
@@ -149,8 +149,9 @@ const createQueryTooltipsField = (
         const newTooltips: Tooltip[] = [];
         for (const [, query] of sortedQueries) {
           // With keepNotations: true, use the line/character position from TwoSlash
-          const targetPos = tr.state.doc.line(query.line + 1).from + query.character;
-          
+          const targetPos =
+            tr.state.doc.line(query.line + 1).from + query.character;
+
           const tooltip: Tooltip = {
             pos: targetPos,
             above: true,
@@ -164,6 +165,7 @@ const createQueryTooltipsField = (
                   highlighter,
                   language,
                   currentTheme,
+                  tr.state,
                 ),
               };
             },
@@ -190,15 +192,16 @@ function createQueryTooltipDOM(
   highlighter?: ShikiHighlighter,
   _language?: BundledLanguage,
   theme?: BundledTheme,
+  editorState?: EditorState,
 ): HTMLElement {
   // Determine colors based on theme
   let bgColor = '#ffffff';
   let borderColor = '#d1d5db';
   let textColor = '#1f2937';
-  
+
   if (theme) {
     // Get theme colors asynchronously for better accuracy
-    getThemeColors(theme).then(colors => {
+    getThemeColors(theme).then((colors) => {
       const elements = document.querySelectorAll('.cm-twoslash-tooltip');
       elements.forEach((el: Element) => {
         const htmlEl = el as HTMLElement;
@@ -207,7 +210,7 @@ function createQueryTooltipDOM(
         htmlEl.style.border = `1px solid ${colors['tooltip.border']}`;
       });
     });
-    
+
     // Use basic colors as immediate fallback
     if (highlighter && highlighter.isInitialized()) {
       const basicColors = highlighter.getBasicThemeColors(theme);
@@ -216,8 +219,10 @@ function createQueryTooltipDOM(
       textColor = basicColors.fg;
     }
   }
-  
-  const shadowColor = highlighter?.isColorDark(bgColor) ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
+
+  const shadowColor = highlighter?.isColorDark(bgColor)
+    ? 'rgba(0, 0, 0, 0.5)'
+    : 'rgba(0, 0, 0, 0.15)';
 
   const container = document.createElement('div');
   container.className = 'cm-twoslash-query-tooltip';
@@ -238,7 +243,36 @@ function createQueryTooltipDOM(
     z-index: 1000;
     box-shadow: 0 2px 8px ${shadowColor};
     pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
   `;
+  
+  // Set initial opacity based on focus state
+  const updateOpacity = () => {
+    const editorElement = document.querySelector('.cm-editor.cm-focused');
+    container.style.opacity = editorElement ? '0.45' : '1';
+  };
+  
+  // Set initial opacity
+  updateOpacity();
+  
+  // Watch for focus changes on the editor
+  const observer = new MutationObserver(() => {
+    updateOpacity();
+  });
+  
+  // Find the editor element and observe class changes
+  setTimeout(() => {
+    const editor = container.closest('.cm-editor');
+    if (editor) {
+      observer.observe(editor, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    }
+  }, 0);
+  
+  // Store observer for cleanup
+  (container as any)._observer = observer;
 
   // Add type info
   const typeDiv = document.createElement('div');
@@ -254,9 +288,11 @@ function createQueryTooltipDOM(
 
   // Apply syntax highlighting asynchronously
   if (highlighter && highlighter.isInitialized()) {
-    renderHighlightedCode(text || '(no type info)', highlighter, theme).then((html) => {
-      typeDiv.innerHTML = html;
-    });
+    renderHighlightedCode(text || '(no type info)', highlighter, theme).then(
+      (html) => {
+        typeDiv.innerHTML = html;
+      },
+    );
   } else {
     typeDiv.textContent = text || '(no type info)';
   }
@@ -296,11 +332,11 @@ async function renderHighlightedCode(
   try {
     // Use TypeScript for type information highlighting with current theme
     const tokens = await highlighter.tokenize(code, 'typescript', theme);
-    
+
     if (tokens.length > 0) {
       // Render ALL lines, not just the first one!
-      const renderedLines = tokens.map(line => 
-        highlighter.renderTokensToHtml(line.tokens)
+      const renderedLines = tokens.map((line) =>
+        highlighter.renderTokensToHtml(line.tokens),
       );
       // Join lines with newlines to preserve multiline structure
       return renderedLines.join('\n');
@@ -311,7 +347,6 @@ async function renderHighlightedCode(
 
   return escapeHtml(code);
 }
-
 
 class TwoslashTooltipView {
   public view: EditorView;
@@ -538,20 +573,23 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
           let bgColor = '#ffffff';
           let borderColor = '#d1d5db';
           let textColor = '#1f2937';
-          
+
           // Use async to get theme colors, but apply them when available
           if (currentTheme) {
-            getThemeColors(currentTheme).then(colors => {
-              dom.style.backgroundColor = colors['tooltip.background'];
-              dom.style.color = colors['tooltip.foreground'];
-              dom.style.border = `1px solid ${colors['tooltip.border']}`;
-            }).catch(() => {
-              // Fallback already applied
-            });
-            
+            getThemeColors(currentTheme)
+              .then((colors) => {
+                dom.style.backgroundColor = colors['tooltip.background'];
+                dom.style.color = colors['tooltip.foreground'];
+                dom.style.border = `1px solid ${colors['tooltip.border']}`;
+              })
+              .catch(() => {
+                // Fallback already applied
+              });
+
             // Apply basic colors synchronously as fallback
             if (config.highlighter && config.highlighter.isInitialized()) {
-              const basicColors = config.highlighter.getBasicThemeColors(currentTheme);
+              const basicColors =
+                config.highlighter.getBasicThemeColors(currentTheme);
               bgColor = basicColors.bg;
               borderColor = basicColors.border;
               textColor = basicColors.fg;
@@ -657,15 +695,18 @@ const errorUnderlineField = StateField.define<DecorationSet>({
 });
 
 // Function to update tooltip arrow styles based on theme
-function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighlighter) {
+function updateTooltipArrowStyles(
+  theme: BundledTheme,
+  highlighter?: ShikiHighlighter,
+) {
   let borderColor = '#d1d5db';
   let bgColor = '#ffffff';
-  
+
   // Get theme colors asynchronously for better accuracy
-  getThemeColors(theme).then(colors => {
+  getThemeColors(theme).then((colors) => {
     borderColor = colors['tooltip.border'];
     bgColor = colors['tooltip.background'];
-    
+
     // Update the style element with new colors
     const styleContent = `
       .cm-tooltip-arrow:before {
@@ -681,8 +722,10 @@ function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighli
         border-color: ${bgColor} transparent transparent transparent !important;
       }
     `;
-    
-    let styleElement = document.getElementById('twoslash-tooltip-arrow-styles') as HTMLStyleElement;
+
+    let styleElement = document.getElementById(
+      'twoslash-tooltip-arrow-styles',
+    ) as HTMLStyleElement;
     if (!styleElement) {
       styleElement = document.createElement('style');
       styleElement.id = 'twoslash-tooltip-arrow-styles';
@@ -690,20 +733,22 @@ function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighli
     }
     styleElement.textContent = styleContent;
   });
-  
+
   // Use basic colors as immediate fallback
   if (highlighter && highlighter.isInitialized()) {
     const basicColors = highlighter.getBasicThemeColors(theme);
     borderColor = basicColors.border;
     bgColor = basicColors.bg;
   }
-  
+
   // Remove existing style element if it exists
-  const existingStyle = document.getElementById('twoslash-tooltip-arrow-styles');
+  const existingStyle = document.getElementById(
+    'twoslash-tooltip-arrow-styles',
+  );
   if (existingStyle) {
     existingStyle.remove();
   }
-  
+
   // Create new style element with theme-appropriate arrow colors
   const style = document.createElement('style');
   style.id = 'twoslash-tooltip-arrow-styles';
@@ -777,8 +822,8 @@ export function twoslashTooltipPlugin(
         // Listen for theme changes and update arrow styles
         for (const effect of tr.effects) {
           if (effect.is(updateTooltipTheme) || effect.is(updateShikiConfig)) {
-            const theme = effect.is(updateTooltipTheme) 
-              ? effect.value 
+            const theme = effect.is(updateTooltipTheme)
+              ? effect.value
               : effect.value.theme;
             if (theme) {
               updateTooltipArrowStyles(theme, config.highlighter);
