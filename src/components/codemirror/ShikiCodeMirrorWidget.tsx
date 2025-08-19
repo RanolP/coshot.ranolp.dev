@@ -418,6 +418,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
         display: 'flex',
         'flex-direction': 'column',
         height: '100%',
+        position: 'relative',
+        'min-height': props.height || '400px',
       }}
     >
       {isLoading() && (
@@ -427,11 +429,40 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            color: themeColors().fg,
-            'font-size': '14px',
+            display: 'flex',
+            'flex-direction': 'column',
+            'align-items': 'center',
+            gap: '16px',
+            'z-index': '10',
           }}
         >
-          Loading Shiki highlighter...
+          <div
+            class="loading-spinner"
+            style={{
+              width: '40px',
+              height: '40px',
+              border: `3px solid ${themeColors().border}`,
+              'border-top-color': themeColors().fg,
+              'border-radius': '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
+          <div
+            style={{
+              color: themeColors().fg,
+              'font-size': '14px',
+              opacity: '0.8',
+              'font-family': 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+            }}
+          >
+            Initializing editor...
+          </div>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       )}
       <div
@@ -441,8 +472,10 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           flex: '1',
           'border-radius': '8px',
           overflow: 'hidden',
-          opacity: isLoading() ? '0.5' : '1',
-          transition: 'opacity 0.3s',
+          opacity: isLoading() ? '0.3' : '1',
+          filter: isLoading() ? 'blur(2px)' : 'none',
+          transition: 'opacity 0.3s ease, filter 0.3s ease',
+          'pointer-events': isLoading() ? 'none' : 'auto',
         }}
       />
       {isReady() && (
@@ -481,18 +514,6 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
               }}
             />
           )}
-          <span
-            style={{
-              color: themeColors().fg,
-              'font-size': '12px',
-              'margin-left': 'auto',
-              display: 'flex',
-              'align-items': 'center',
-              gap: '8px',
-            }}
-          >
-            {props.language ? (languageDisplayNames[props.language] || props.language) : 'Text'}
-          </span>
         </div>
       )}
     </div>

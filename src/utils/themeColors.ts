@@ -297,7 +297,3 @@ export async function getThemeColors(theme: BundledTheme): Promise<ThemeColors> 
   }
 }
 
-// Clear cache when needed
-export function clearThemeColorsCache() {
-  themeColorsCache.clear();
-}

@@ -309,8 +309,6 @@ export const updateShikiConfig = StateEffect.define<{
   theme?: BundledTheme;
 }>();
 
-// Export the theme compartment so it can be used elsewhere if needed
-export { themeCompartment };
 
 export function shikiEditorPlugin(
   config: ShikiEditorPluginConfig = {},
@@ -334,7 +332,7 @@ export function shikiEditorPlugin(
 }
 
 // Helper function to create the plugin with a shared highlighter instance
-export async function createShikiEditorExtension(
+async function createShikiEditorExtension(
   config: {
     language?: BundledLanguage;
     theme?: BundledTheme;
@@ -360,7 +358,7 @@ export async function createShikiEditorExtension(
 // Facet for dynamic language/theme updates
 import { Facet } from '@codemirror/state';
 
-export const shikiConfig = Facet.define<
+const shikiConfig = Facet.define<
   ShikiEditorPluginConfig,
   ShikiEditorPluginConfig
 >({

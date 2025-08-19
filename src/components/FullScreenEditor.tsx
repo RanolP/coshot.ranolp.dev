@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import TwoslashToggle from './TwoslashToggle';
 import { languageDisplayNames } from '../utils/languageNames';
 import ShareModal from './ShareModal';
+import FeaturesModal from './FeaturesModal';
 
 const FullScreenEditor: Component = () => {
   const { theme, setTheme, colors } = useTheme();
@@ -43,6 +44,7 @@ const userId = user.id;
   const [editorWidth, setEditorWidth] = createSignal<number | null>(null);
   const [isResizing, setIsResizing] = createSignal(false);
   const [showShareModal, setShowShareModal] = createSignal(false);
+  const [showFeaturesModal, setShowFeaturesModal] = createSignal(false);
 
   let highlighterInstance: ShikiHighlighter | undefined;
   let resizableRef: HTMLDivElement | undefined;
@@ -139,6 +141,44 @@ const userId = user.id;
             </button>
           )}
           
+          {/* Coshot Logo and Help button - positioned above editor */}
+          <div 
+            class="absolute z-30 flex items-center gap-12px"
+            style={{ 
+              top: '-32px',
+              left: '0'
+            }}
+          >
+            <h1 
+              class="text-18px font-900 m-0 uppercase pointer-events-none" 
+              style={{ 
+                'letter-spacing': '0.15em',
+                color: colors()?.['titleBar.activeForeground'] || 'var(--theme-titleBar-activeForeground)',
+                opacity: '0.7'
+              }}
+            >
+              COSHOT
+            </h1>
+            <button
+              class="w-28px h-28px rounded-full border-2 cursor-pointer flex items-center justify-center transition-all duration-200"
+              style={{
+                'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
+                'border-color': colors()?.['input.border'] || 'var(--theme-input-border)',
+                color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
+              }}
+              onClick={() => setShowFeaturesModal(true)}
+              title="Features & TwoSlash Tips"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors()?.['button.hoverBackground'] || 'var(--theme-button-hoverBackground)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colors()?.['button.background'] || 'var(--theme-button-background)';
+              }}
+            >
+              <div class="i-lucide:help-circle w-16px h-16px" />
+            </button>
+          </div>
+          
           <div 
             ref={resizableRef}
             class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
@@ -152,6 +192,7 @@ const userId = user.id;
               height: 'auto'
             }}
           >
+          
           <div class="flex-1 overflow-hidden flex flex-col rounded-12px editor-container">
             <ShikiCodeMirrorWidget
               value={code()}
@@ -190,30 +231,6 @@ const userId = user.id;
           </div>
         </div>
       </div>
-
-      <div 
-        class="h-32px flex items-center justify-between px-20px flex-shrink-0 text-12px z-100"
-        style={{
-          'background-color': colors()?.['statusBar.background'] || 'var(--theme-statusBar-background)',
-          'border-top': `1px solid ${colors()?.['statusBar.border'] || 'var(--theme-statusBar-border)'}`,
-          color: colors()?.['statusBar.foreground'] || 'var(--theme-statusBar-foreground)'
-        }}
-      >
-        <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">UTF-8</span>
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">LF</span>
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">{languageDisplayNames[language()] || language()}</span>
-        </div>
-        <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">Ready</span>
-        </div>
-        <div class="flex items-center gap-16px">
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">Ln 1, Col 1</span>
-          <span class="flex items-center px-8px h-20px rounded-3px cursor-default">
-            {editorWidth() !== null ? `Width: ${editorWidth()}px` : 'Auto Width'}
-          </span>
-        </div>
-      </div>
       
       <ShareModal
         isOpen={showShareModal()}
@@ -223,6 +240,11 @@ const userId = user.id;
         theme={theme()}
         enableTwoslash={enableTwoslash()}
         editorWidth={editorWidth()}
+      />
+      
+      <FeaturesModal 
+        isOpen={showFeaturesModal()} 
+        onClose={() => setShowFeaturesModal(false)} 
       />
     </div>
   );

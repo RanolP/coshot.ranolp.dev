@@ -10,19 +10,19 @@ import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { TwoslashCdnReturn } from 'twoslash-cdn';
 import { getThemeColors, type ThemeColors } from '../../utils/themeColors';
 
-export interface ShikiHighlighterOptions {
+interface ShikiHighlighterOptions {
   themes?: BundledTheme[];
   langs?: BundledLanguage[];
   defaultTheme?: BundledTheme;
   defaultLang?: BundledLanguage;
 }
 
-export interface TokenizedLine {
+interface TokenizedLine {
   tokens: ThemedToken[];
   line: number;
 }
 
-export interface HighlightResult {
+interface HighlightResult {
   lines: TokenizedLine[];
   twoslashData?: TwoslashShikiReturn;
 }

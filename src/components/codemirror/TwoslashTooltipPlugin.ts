@@ -955,7 +955,7 @@ export function twoslashTooltipPlugin(
 }
 
 // Helper to create the complete TwoSlash extension
-export async function createTwoslashExtension(
+async function createTwoslashExtension(
   config: {
     language?: BundledLanguage;
     themes?: string[];

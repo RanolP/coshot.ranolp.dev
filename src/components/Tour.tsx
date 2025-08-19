@@ -22,35 +22,41 @@ const Tour: Component<TourProps> = (props) => {
   const tourSteps: TourStep[] = [
     {
       title: 'Welcome to Coshot!',
-      content: 'Coshot helps you create beautiful, shareable code screenshots with a real editor experience and TypeScript type checking. Let me show you around!',
+      content: 'Coshot helps you create beautiful, shareable code screenshots with syntax highlighting and real TypeScript type checking.',
     },
     {
       target: '.editor-container',
-      title: 'Full Editor Experience',
-      content: 'Powered by CodeMirror with all features enabled: syntax highlighting, autocomplete, search, and more. Edit your code naturally before taking the perfect screenshot.',
+      title: 'Code Editor',
+      content: 'Type or paste your code here. The editor provides syntax highlighting for over 100 programming languages, making your code look clean and professional.',
       position: 'top'
     },
     {
-      target: '.theme-selector',
-      title: 'Theme Selector',
-      content: 'Click here to choose from over 60 beautiful themes including GitHub, Dracula, Monokai, and many more. Themes instantly update the editor appearance.',
-      position: 'left'
+      target: '.editor-toolbar',
+      title: 'Customize Your Theme',
+      content: 'Click the palette icon to choose from over 60 beautiful themes including GitHub, Dracula, One Dark Pro, and more. Each theme instantly updates your code\'s appearance to match your brand or preference.',
+      position: 'bottom'
+    },
+    {
+      target: '.editor-toolbar',
+      title: 'Language Support',
+      content: 'Select your programming language from 100+ supported languages. Each language gets proper syntax highlighting tailored to its syntax.',
+      position: 'bottom'
+    },
+    {
+      target: '.editor-toolbar',
+      title: 'TwoSlash - Type Information',
+      content: 'For TypeScript and JavaScript, enable TwoSlash to show real type information in your screenshots. This feature runs the TypeScript compiler to display actual types and errors.',
+      position: 'bottom'
     },
     {
       target: '.editor-container',
-      title: 'TypeScript in Screenshots',
-      content: 'The killer feature: TwoSlash integration! Your TypeScript screenshots can show actual type information. Hover to see types, add "//    ^?" to display types in the screenshot. Perfect for tutorials!',
+      title: 'Try TwoSlash Example',
+      content: 'With TwoSlash enabled, try typing: const num = 42; then on the next line type: num and add a comment "//    ^?" to see the type displayed. Perfect for educational content and documentation!',
       position: 'top'
     },
     {
-      target: '.editor-container',
-      title: 'Keyboard Shortcuts',
-      content: 'Use Ctrl/Cmd + F to search, Tab for indent/autocomplete, and Ctrl/Cmd + Space to trigger autocomplete manually.',
-      position: 'top'
-    },
-    {
-      title: 'Start Creating!',
-      content: 'You\'re all set! Enjoy creating beautiful code screenshots with Coshot. Perfect for documentation, tutorials, and social media sharing. Click "Finish" to start!',
+      title: 'Ready to Create!',
+      content: 'You\'re all set! Create beautiful code screenshots and share them with the Share button. Perfect for documentation, tutorials, and social media.',
     }
   ];
 
