@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-import { Show, createSignal, onMount } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import { useTheme } from '../contexts/theme-context';
 import Tour from './tour';
 

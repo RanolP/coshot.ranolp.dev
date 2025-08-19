@@ -47,7 +47,6 @@ class ShikiEditorView {
   private theme: BundledTheme;
   private updateTimeout: number | null = null;
   private lastContent: string = '';
-  private lastDecorations: DecorationSet = Decoration.none;
 
   constructor(view: EditorView, config: ShikiEditorPluginConfig) {
     this.view = view;
@@ -166,7 +165,6 @@ class ShikiEditorView {
       // Only update if decorations actually changed
       if (newDecorations !== this.decorations) {
         this.decorations = newDecorations;
-        this.lastDecorations = newDecorations;
 
         // Update theme colors and force a view update
         this.view.dispatch({
@@ -307,36 +305,3 @@ export function shikiEditorPlugin(config: ShikiEditorPluginConfig = {}): Extensi
 
   return [themeColorsField, initialTheme, plugin];
 }
-
-// Helper function to create the plugin with a shared highlighter instance
-async function createShikiEditorExtension(
-  config: {
-    language?: BundledLanguage;
-    theme?: BundledTheme;
-    themes?: BundledTheme[];
-    langs?: BundledLanguage[];
-  } = {},
-): Promise<Extension> {
-  const highlighter = new ShikiHighlighter({
-    themes: config.themes,
-    langs: config.langs,
-  });
-
-  // Pre-initialize the highlighter
-  await highlighter.initialize();
-
-  return shikiEditorPlugin({
-    language: config.language,
-    theme: config.theme,
-    highlighter,
-  });
-}
-
-// Facet for dynamic language/theme updates
-import { Facet } from '@codemirror/state';
-
-const shikiConfig = Facet.define<ShikiEditorPluginConfig, ShikiEditorPluginConfig>({
-  combine(configs) {
-    return configs[configs.length - 1] || {};
-  },
-});

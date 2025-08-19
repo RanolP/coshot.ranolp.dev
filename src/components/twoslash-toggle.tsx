@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-import { createMemo, createSignal, Show } from 'solid-js';
+import { createMemo, createSignal } from 'solid-js';
 import { Tooltip } from '@ark-ui/solid';
 import { getLanguageDisplayName } from '../utils/language-names';
 

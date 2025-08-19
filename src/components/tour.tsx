@@ -170,7 +170,7 @@ const Tour: Component<TourProps> = (props) => {
               <h3 class="m-0 text-20px font-600">{currentStepData().title}</h3>
               <button
                 class="bg-none border-none cursor-pointer p-0 w-24px h-24px flex items-center justify-center rounded-4px opacity-60 hover:opacity-100"
-                style={{ color: colors()?.['icon.foreground'] || 'var(--theme-icon-foreground)' }}
+                style={{ color: colors()?.['input.foreground'] || 'var(--theme-icon-foreground)' }}
                 onClick={skipTour}
                 title="Close tour"
               >
@@ -191,13 +191,13 @@ const Tour: Component<TourProps> = (props) => {
                     class="px-16px py-8px rounded-6px border-1 cursor-pointer font-500 text-14px transition-all"
                     style={{
                       'background-color': 'transparent',
-                      'border-color': colors()?.['button.border'] || 'var(--theme-button-border)',
+                      'border-color': (colors() as any)?.['button.border'] || 'var(--theme-button-border)',
                       color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)',
                     }}
                     onClick={prevStep}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor =
-                        colors()?.['button.secondaryHoverBackground'] ||
+                        colors()?.['button.hoverBackground'] ||
                         'var(--theme-button-secondaryHoverBackground)';
                     }}
                     onMouseLeave={(e) => {

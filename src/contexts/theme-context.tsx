@@ -5,7 +5,6 @@ import {
   type JSX,
   createEffect,
   createSignal,
-  onMount,
 } from 'solid-js';
 import type { BundledTheme } from 'shiki';
 import { getThemeColors, type ThemeColors } from '../utils/theme-colors';

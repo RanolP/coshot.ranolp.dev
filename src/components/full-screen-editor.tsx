@@ -1,11 +1,8 @@
 import type { Component } from 'solid-js';
-import { createSignal, createEffect, onMount, onCleanup } from 'solid-js';
-import type { BundledTheme } from 'shiki';
+import { createSignal, createEffect, onMount } from 'solid-js';
 import ShikiCodeMirrorWidget from './codemirror/shiki-code-mirror-widget';
 import { ShikiHighlighter } from './codemirror/shiki-highlighter';
 import { useTheme } from '../contexts/theme-context';
-import TwoslashToggle from './twoslash-toggle';
-import { languageDisplayNames } from '../utils/language-names';
 import ShareModal from './share-modal';
 import FeaturesModal from './features-modal';
 
@@ -43,9 +40,9 @@ const userId = user.id;
   const [language, setLanguage] = createSignal<string>('typescript');
   const [enableTwoslash, setEnableTwoslash] = createSignal(true);
   const [editorWidth, setEditorWidth] = createSignal<number | null>(null);
-  const [isResizing, setIsResizing] = createSignal(false);
   const [showShareModal, setShowShareModal] = createSignal(false);
   const [showFeaturesModal, setShowFeaturesModal] = createSignal(false);
+  const [, setIsResizing] = createSignal(false);
 
   let highlighterInstance: ShikiHighlighter | undefined;
   let resizableRef: HTMLDivElement | undefined;
@@ -206,7 +203,7 @@ const userId = user.id;
             <div class="flex-1 overflow-hidden flex flex-col rounded-12px editor-container">
               <ShikiCodeMirrorWidget
                 value={code()}
-                language={language()}
+                language={language() as any}
                 theme={theme()}
                 onChange={setCode}
                 onThemeChange={setTheme}

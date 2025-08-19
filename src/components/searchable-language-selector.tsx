@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-import { For, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import { For, createSignal, createEffect, onCleanup } from 'solid-js';
 import { Combobox, useListCollection } from '@ark-ui/solid/combobox';
 import { useFilter } from '@ark-ui/solid/locale';
 import type { BundledLanguage } from 'shiki';

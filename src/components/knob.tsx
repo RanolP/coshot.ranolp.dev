@@ -1,4 +1,4 @@
-import { createSignal, createEffect, type Component, onMount } from 'solid-js';
+import { createSignal, type Component, onMount } from 'solid-js';
 
 interface KnobProps {
   value: number;
@@ -157,7 +157,7 @@ const Knob: Component<KnobProps> = (props) => {
     props.onChange(newValue);
   };
 
-  const handleInputChange = (e: InputEvent) => {
+  const handleInputChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     let value = target.value;
 

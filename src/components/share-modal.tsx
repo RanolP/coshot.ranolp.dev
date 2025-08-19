@@ -74,7 +74,6 @@ const ShareModal: Component<ShareModalProps> = (props) => {
       await highlighter.loadLanguage(props.language);
 
       let html = '';
-      const themeColors = await highlighter.getThemeColors(props.theme);
       const newTooltips: TwoslashTooltip[] = [];
 
       let cleanCode = props.code;
@@ -120,7 +119,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           html += `<span class="line-content" data-line-content="${lineNumber}" style="flex: 1; white-space: pre;">`;
 
           // Render the clean tokens
-          html += highlighter.renderTokensToHtml(line.tokens);
+          html += highlighter!.renderTokensToHtml(line.tokens);
 
           html += '</span></div>';
         });
@@ -182,7 +181,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                     props.theme,
                   );
                   tooltipHtml = tooltipTokens
-                    .map((line) => highlighter.renderTokensToHtml(line.tokens))
+                    .map((line) => highlighter!.renderTokensToHtml(line.tokens))
                     .join('<br>');
                 } catch {
                   // Fallback to plain text
@@ -222,7 +221,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           }
 
           html += '<span class="line-content" style="flex: 1; white-space: pre;">';
-          html += highlighter.renderTokensToHtml(line.tokens);
+          html += highlighter!.renderTokensToHtml(line.tokens);
           html += '</span></div>';
         });
 
@@ -292,7 +291,6 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           // Get positions relative to the outer container (which has the padding)
           const lineContentRect = lineContent.getBoundingClientRect();
           const containerRect = containerRef.getBoundingClientRect();
-          const previewRect = previewRef.getBoundingClientRect();
 
           // Calculate position relative to container, accounting for preview's position within container
           const relativeX = lineContentRect.left - containerRect.left + textWidth;
@@ -615,14 +613,14 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                         class="px-3 py-2 rounded-md shadow-xl text-sm max-w-md"
                         style={{
                           'background-color':
-                            colors()?.['editorHoverWidget.background'] ||
+                            (colors() as any)?.['editorHoverWidget.background'] ||
                             colors()?.['dropdown.background'] ||
                             '#1e1e2e',
                           color:
-                            colors()?.['editorHoverWidget.foreground'] ||
+                            (colors() as any)?.['editorHoverWidget.foreground'] ||
                             colors()?.['dropdown.foreground'] ||
                             '#cdd6f4',
-                          border: `1px solid ${colors()?.['editorHoverWidget.border'] || colors()?.['dropdown.border'] || '#313244'}`,
+                          border: `1px solid ${(colors() as any)?.['editorHoverWidget.border'] || colors()?.['dropdown.border'] || '#313244'}`,
                           'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4)',
                         }}
                       >
@@ -664,11 +662,11 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                   class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   style={{
                     'background-color':
-                      colors()?.['button.secondaryBackground'] ||
+                      (colors() as any)?.['button.secondaryBackground'] ||
                       colors()?.['button.background'] ||
                       'var(--theme-button-background)',
                     color:
-                      colors()?.['button.secondaryForeground'] ||
+                      (colors() as any)?.['button.secondaryForeground'] ||
                       colors()?.['button.foreground'] ||
                       'var(--theme-button-foreground)',
                   }}

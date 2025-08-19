@@ -40,7 +40,6 @@ import {
   enableTwoslashData,
 } from './twoslash-tooltip-plugin';
 import { ShikiHighlighter } from './shiki-highlighter';
-import { languageDisplayNames } from '../../utils/language-names';
 
 // All available Shiki themes
 const AVAILABLE_THEMES: BundledTheme[] = [
@@ -545,10 +544,6 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
               enabled={props.enableTwoslash || false}
               language={props.language || 'javascript'}
               onToggle={(enabled) => props.onTwoslashToggle?.(enabled)}
-              colors={{
-                foreground: themeColors().fg,
-                background: themeColors().bg,
-              }}
             />
           )}
         </div>
