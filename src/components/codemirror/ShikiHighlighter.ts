@@ -4,7 +4,6 @@ import {
   type BundledLanguage,
   type BundledTheme,
   type ThemedToken,
-  type ThemedTokenWithVariants,
 } from 'shiki';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { TwoslashCdnReturn } from 'twoslash-cdn';
@@ -37,7 +36,7 @@ export class ShikiHighlighter {
   constructor(options: ShikiHighlighterOptions = {}) {
     this.options = {
       themes: options.themes || ['github-light', 'github-dark'],
-      langs: options.langs || [],  // We'll load languages on demand
+      langs: options.langs || [], // We'll load languages on demand
       defaultTheme: options.defaultTheme || 'github-light',
       defaultLang: options.defaultLang || 'javascript',
     };
@@ -55,7 +54,7 @@ export class ShikiHighlighter {
     // We'll load other languages on demand
     this.highlighter = await createHighlighter({
       themes: this.options.themes!,
-      langs: ['javascript', 'typescript', 'html', 'css'],  // Start with common languages
+      langs: ['javascript', 'typescript', 'html', 'css'], // Start with common languages
     });
 
     // Dynamically import twoslash-cdn for client-side usage
@@ -153,25 +152,22 @@ export class ShikiHighlighter {
     const selectedTheme = theme || this.options.defaultTheme!;
 
     // Check if the language supports TwoSlash
-    const supportsTwoslash = [
-      'typescript',
-      'tsx',
-      'javascript',
-      'jsx',
-    ].includes(lang);
+    const supportsTwoslash = ['typescript', 'tsx', 'javascript', 'jsx'].includes(lang);
 
     if (!supportsTwoslash) {
       // Just do regular highlighting without TwoSlash
       const lines = await this.tokenize(code, lang, selectedTheme);
       const result = { lines };
-      
+
       // Cache this result too
       if (this.twoslashCache.size > 20) {
         const firstKey = this.twoslashCache.keys().next().value;
-        this.twoslashCache.delete(firstKey);
+        if (firstKey !== undefined) {
+          this.twoslashCache.delete(firstKey);
+        }
       }
       this.twoslashCache.set(cacheKey, result);
-      
+
       return result;
     }
 
@@ -180,12 +176,12 @@ export class ShikiHighlighter {
       lang === 'typescript'
         ? 'ts'
         : lang === 'javascript'
-        ? 'js'
-        : lang === 'tsx'
-        ? 'tsx'
-        : lang === 'jsx'
-        ? 'jsx'
-        : 'ts';
+          ? 'js'
+          : lang === 'tsx'
+            ? 'tsx'
+            : lang === 'jsx'
+              ? 'jsx'
+              : 'ts';
 
     // First prepare types
     await this.twoslashInstance.prepareTypes(code);
@@ -230,14 +226,16 @@ export class ShikiHighlighter {
         // Fall back to regular highlighting
         const lines = await this.tokenize(code, lang, selectedTheme);
         const result = { lines };
-        
+
         // Still cache even error fallbacks
         if (this.twoslashCache.size > 20) {
           const firstKey = this.twoslashCache.keys().next().value;
-          this.twoslashCache.delete(firstKey);
+          if (firstKey !== undefined) {
+            this.twoslashCache.delete(firstKey);
+          }
         }
         this.twoslashCache.set(cacheKey, result);
-        
+
         return result;
       }
     }
@@ -257,9 +255,7 @@ export class ShikiHighlighter {
     const twoslashData: TwoslashShikiReturn = {
       nodes: twoslashResult.nodes || [],
       code: twoslashResult.code || code,
-      meta: twoslashResult.meta
-        ? { extension: twoslashResult.meta.extension }
-        : undefined,
+      meta: twoslashResult.meta ? { extension: twoslashResult.meta.extension } : undefined,
     };
 
     const result = {
@@ -271,7 +267,9 @@ export class ShikiHighlighter {
     if (this.twoslashCache.size > 20) {
       // Remove oldest entries
       const firstKey = this.twoslashCache.keys().next().value;
-      this.twoslashCache.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.twoslashCache.delete(firstKey);
+      }
     }
     this.twoslashCache.set(cacheKey, result);
 
@@ -283,9 +281,7 @@ export class ShikiHighlighter {
       .map((token) => {
         const style = token.color ? `color: ${token.color}` : '';
         // Escape HTML but preserve the original content including newlines
-        return `<span style="${style}">${this.escapeHtml(
-          token.content,
-        )}</span>`;
+        return `<span style="${style}">${this.escapeHtml(token.content)}</span>`;
       })
       .join('');
   }
@@ -302,13 +298,13 @@ export class ShikiHighlighter {
   async getThemeColors(themeName: BundledTheme): Promise<ThemeColors> {
     return await getThemeColors(themeName);
   }
-  
+
   /**
    * Get basic theme colors synchronously (for backward compatibility)
    */
-  getBasicThemeColors(themeName: BundledTheme): { 
-    bg: string; 
-    fg: string; 
+  getBasicThemeColors(themeName: BundledTheme): {
+    bg: string;
+    fg: string;
     border: string;
   } {
     if (!this.highlighter) {
@@ -319,17 +315,18 @@ export class ShikiHighlighter {
       const theme = this.highlighter.getTheme(themeName);
       const bg = theme.bg || '#ffffff';
       const fg = theme.fg || '#000000';
-      
+
       // Extract actual theme colors from VSCode theme format
       const colors = (theme as any).colors || {};
-      
-      return { 
-        bg: bg || colors['editor.background'] || '#ffffff', 
-        fg: fg || colors['editor.foreground'] || '#000000', 
-        border: colors['panel.border'] || 
-                colors['editorGroup.border'] || 
-                colors['editor.lineHighlightBorder'] ||
-                this.mixColors(bg, fg, 0.1),
+
+      return {
+        bg: bg || colors['editor.background'] || '#ffffff',
+        fg: fg || colors['editor.foreground'] || '#000000',
+        border:
+          colors['panel.border'] ||
+          colors['editorGroup.border'] ||
+          colors['editor.lineHighlightBorder'] ||
+          this.mixColors(bg, fg, 0.1),
       };
     } catch (error) {
       console.warn('Failed to get theme colors:', error);
@@ -343,19 +340,19 @@ export class ShikiHighlighter {
   private mixColors(color1: string, color2: string, ratio: number): string {
     const hex1 = color1.replace('#', '');
     const hex2 = color2.replace('#', '');
-    
+
     const r1 = parseInt(hex1.substring(0, 2), 16);
     const g1 = parseInt(hex1.substring(2, 4), 16);
     const b1 = parseInt(hex1.substring(4, 6), 16);
-    
+
     const r2 = parseInt(hex2.substring(0, 2), 16);
     const g2 = parseInt(hex2.substring(2, 4), 16);
     const b2 = parseInt(hex2.substring(4, 6), 16);
-    
+
     const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
     const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
     const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
-    
+
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 
@@ -370,7 +367,6 @@ export class ShikiHighlighter {
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance < 0.5;
   }
-
 
   async dispose(): Promise<void> {
     if (this.highlighter) {

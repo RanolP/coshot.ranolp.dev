@@ -156,8 +156,7 @@ const createQueryTooltipsField = (
         const newTooltips: Tooltip[] = [];
         for (const [, query] of sortedQueries) {
           // With keepNotations: true, use the line/character position from TwoSlash
-          const targetPos =
-            tr.state.doc.line(query.line + 1).from + query.character;
+          const targetPos = tr.state.doc.line(query.line + 1).from + query.character;
 
           const tooltip: Tooltip = {
             pos: targetPos,
@@ -190,7 +189,7 @@ const createQueryTooltipsField = (
                     }
                   }
                   // Don't clear global typing timeout as it's shared across tooltips
-                }
+                },
               };
             },
           };
@@ -268,9 +267,9 @@ function createQueryTooltipDOM(
     pointer-events: none;
     transition: opacity 0.2s ease-in-out;
   `;
-  
+
   const SHOW_DELAY = 3000; // Show tooltip 3 seconds after last edit
-  
+
   // Set opacity based on focus and typing state using global state
   const updateOpacity = () => {
     const editorElement = document.querySelector('.cm-editor.cm-focused');
@@ -287,33 +286,33 @@ function createQueryTooltipDOM(
       container.style.pointerEvents = 'none';
     }
   };
-  
+
   // Handle keyboard activity with proper debouncing - resets timer on EVERY keystroke
   const handleKeyboard = (event: Event) => {
     const editorElement = document.querySelector('.cm-editor.cm-focused');
     if (!editorElement) return;
-    
+
     // ANY keystroke hides the tooltip and resets the timer
     if (event instanceof KeyboardEvent) {
       // Hide tooltip immediately on any key press
       globalTypingState.isTyping = true;
       globalTypingState.lastEditTime = Date.now();
-      
+
       // Update all query tooltips
       document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
         (el as HTMLElement).style.opacity = '0';
       });
-      
+
       // ALWAYS clear and reset the timeout on EVERY keystroke
       if (globalTypingState.typingTimeout !== null) {
         clearTimeout(globalTypingState.typingTimeout);
       }
-      
+
       // Start a fresh 3-second timer
       globalTypingState.typingTimeout = window.setTimeout(() => {
         globalTypingState.isTyping = false;
         globalTypingState.typingTimeout = null;
-        
+
         // Update all query tooltips
         document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
           const editorEl = document.querySelector('.cm-editor.cm-focused');
@@ -322,10 +321,10 @@ function createQueryTooltipDOM(
       }, SHOW_DELAY);
     }
   };
-  
+
   // Set initial opacity
   updateOpacity();
-  
+
   // Watch for focus changes on the editor
   const observer = new MutationObserver(() => {
     // Reset typing state when focus changes
@@ -338,7 +337,7 @@ function createQueryTooltipDOM(
     }
     updateOpacity();
   });
-  
+
   // Find the editor element and set up listeners
   setTimeout(() => {
     const editor = container.closest('.cm-editor');
@@ -346,32 +345,32 @@ function createQueryTooltipDOM(
       // Observe class changes for focus detection
       observer.observe(editor, {
         attributes: true,
-        attributeFilter: ['class']
+        attributeFilter: ['class'],
       });
-      
+
       // Add keyboard event listener to detect typing
       editor.addEventListener('keydown', handleKeyboard);
-      
+
       // Add input event listener to catch paste, cut, and other input events
       const handleInput = () => {
         globalTypingState.isTyping = true;
         globalTypingState.lastEditTime = Date.now();
-        
+
         // Update all query tooltips
         document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
           (el as HTMLElement).style.opacity = '0';
         });
-        
+
         // ALWAYS clear and reset the timeout on every input event
         if (globalTypingState.typingTimeout !== null) {
           clearTimeout(globalTypingState.typingTimeout);
         }
-        
+
         // Start a fresh 3-second timer
         globalTypingState.typingTimeout = window.setTimeout(() => {
           globalTypingState.isTyping = false;
           globalTypingState.typingTimeout = null;
-          
+
           // Update all query tooltips
           document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
             const editorEl = document.querySelector('.cm-editor.cm-focused');
@@ -379,9 +378,9 @@ function createQueryTooltipDOM(
           });
         }, SHOW_DELAY);
       };
-      
+
       editor.addEventListener('input', handleInput);
-      
+
       // Store references for cleanup
       (container as any)._observer = observer;
       (container as any)._keyHandler = handleKeyboard;
@@ -404,11 +403,9 @@ function createQueryTooltipDOM(
 
   // Apply syntax highlighting asynchronously
   if (highlighter && highlighter.isInitialized()) {
-    renderHighlightedCode(text || '(no type info)', highlighter, theme).then(
-      (html) => {
-        typeDiv.innerHTML = html;
-      },
-    );
+    renderHighlightedCode(text || '(no type info)', highlighter, theme).then((html) => {
+      typeDiv.innerHTML = html;
+    });
   } else {
     typeDiv.textContent = text || '(no type info)';
   }
@@ -451,9 +448,7 @@ async function renderHighlightedCode(
 
     if (tokens.length > 0) {
       // Render ALL lines, not just the first one!
-      const renderedLines = tokens.map((line) =>
-        highlighter.renderTokensToHtml(line.tokens),
-      );
+      const renderedLines = tokens.map((line) => highlighter.renderTokensToHtml(line.tokens));
       // Join lines with newlines to preserve multiline structure
       return renderedLines.join('\n');
     }
@@ -570,11 +565,7 @@ class TwoslashTooltipView {
     }
 
     // Get TwoSlash data from highlighter with current theme
-    const result = await this.highlighter.highlightWithTwoslash(
-      content,
-      this.language,
-      this.theme,
-    );
+    const result = await this.highlighter.highlightWithTwoslash(content, this.language, this.theme);
 
     if (result.twoslashData) {
       const data = this.processTwoslashData(result.twoslashData);
@@ -706,8 +697,7 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
 
             // Apply basic colors synchronously as fallback
             if (config.highlighter && config.highlighter.isInitialized()) {
-              const basicColors =
-                config.highlighter.getBasicThemeColors(currentTheme);
+              const basicColors = config.highlighter.getBasicThemeColors(currentTheme);
               bgColor = basicColors.bg;
               borderColor = basicColors.border;
               textColor = basicColors.fg;
@@ -731,8 +721,7 @@ function createHoverTooltip(config: TwoslashTooltipConfig = {}): Extension {
           // Style error tooltips differently
           const errorTooltip = dom.querySelector('.twoslash-error-tooltip');
           if (errorTooltip) {
-            (errorTooltip as HTMLElement).style.borderLeft =
-              '3px solid #f14c4c';
+            (errorTooltip as HTMLElement).style.borderLeft = '3px solid #f14c4c';
             (errorTooltip as HTMLElement).style.paddingLeft = '8px';
           }
 
@@ -792,8 +781,7 @@ const errorUnderlineField = StateField.define<DecorationSet>({
           const decoration = Decoration.mark({
             class: 'cm-twoslash-error',
             attributes: {
-              style:
-                'text-decoration: underline wavy #f14c4c; text-underline-offset: 3px;',
+              style: 'text-decoration: underline wavy #f14c4c; text-underline-offset: 3px;',
             },
           });
           builder.add(start, start + error.length, decoration);
@@ -813,10 +801,7 @@ const errorUnderlineField = StateField.define<DecorationSet>({
 });
 
 // Function to update tooltip arrow styles based on theme
-function updateTooltipArrowStyles(
-  theme: BundledTheme,
-  highlighter?: ShikiHighlighter,
-) {
+function updateTooltipArrowStyles(theme: BundledTheme, highlighter?: ShikiHighlighter) {
   let borderColor = '#d1d5db';
   let bgColor = '#ffffff';
 
@@ -841,9 +826,7 @@ function updateTooltipArrowStyles(
       }
     `;
 
-    let styleElement = document.getElementById(
-      'twoslash-tooltip-arrow-styles',
-    ) as HTMLStyleElement;
+    let styleElement = document.getElementById('twoslash-tooltip-arrow-styles') as HTMLStyleElement;
     if (!styleElement) {
       styleElement = document.createElement('style');
       styleElement.id = 'twoslash-tooltip-arrow-styles';
@@ -860,9 +843,7 @@ function updateTooltipArrowStyles(
   }
 
   // Remove existing style element if it exists
-  const existingStyle = document.getElementById(
-    'twoslash-tooltip-arrow-styles',
-  );
+  const existingStyle = document.getElementById('twoslash-tooltip-arrow-styles');
   if (existingStyle) {
     existingStyle.remove();
   }
@@ -894,9 +875,7 @@ export const clearTwoslashData = disableTwoslash;
 export const enableTwoslashData = enableTwoslash;
 
 // Main plugin export
-export function twoslashTooltipPlugin(
-  config: TwoslashTooltipConfig = {},
-): Extension[] {
+export function twoslashTooltipPlugin(config: TwoslashTooltipConfig = {}): Extension[] {
   const queryTooltipsField = createQueryTooltipsField(
     config.highlighter,
     config.language,
@@ -940,9 +919,7 @@ export function twoslashTooltipPlugin(
         // Listen for theme changes and update arrow styles
         for (const effect of tr.effects) {
           if (effect.is(updateTooltipTheme) || effect.is(updateShikiConfig)) {
-            const theme = effect.is(updateTooltipTheme)
-              ? effect.value
-              : effect.value.theme;
+            const theme = effect.is(updateTooltipTheme) ? effect.value : effect.value.theme;
             if (theme) {
               updateTooltipArrowStyles(theme, config.highlighter);
             }

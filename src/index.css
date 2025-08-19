@@ -18,12 +18,26 @@ body {
 }
 
 /* Ensure consistent line-height for all text elements */
-p, span, div, h1, h2, h3, h4, h5, h6, li, a, button, label {
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+a,
+button,
+label {
   line-height: inherit;
 }
 
 /* Code elements should have tighter line-height */
-code, kbd, pre {
+code,
+kbd,
+pre {
   line-height: 1.4;
 }
 

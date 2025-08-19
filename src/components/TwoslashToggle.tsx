@@ -13,10 +13,8 @@ const TWOSLASH_SUPPORTED_LANGUAGES = ['typescript', 'tsx', 'javascript', 'jsx'];
 
 const TwoslashToggle: Component<TwoslashToggleProps> = (props) => {
   const [showUnsupportedTooltip, setShowUnsupportedTooltip] = createSignal(false);
-  
-  const isSupported = createMemo(() => 
-    TWOSLASH_SUPPORTED_LANGUAGES.includes(props.language)
-  );
+
+  const isSupported = createMemo(() => TWOSLASH_SUPPORTED_LANGUAGES.includes(props.language));
 
   const toggleState = createMemo(() => {
     if (!props.enabled) return 'disabled';
@@ -32,7 +30,7 @@ const TwoslashToggle: Component<TwoslashToggleProps> = (props) => {
       setTimeout(() => setShowUnsupportedTooltip(false), 3000);
       return; // Don't toggle, just show tooltip
     }
-    
+
     // Only allow toggling if language is supported
     if (isSupported()) {
       props.onToggle(!props.enabled);
@@ -41,7 +39,7 @@ const TwoslashToggle: Component<TwoslashToggleProps> = (props) => {
 
   const getStateClasses = createMemo(() => {
     const state = toggleState();
-    
+
     if (state === 'disabled') {
       const cursorClass = isSupported() ? 'cursor-pointer' : 'cursor-not-allowed';
       const opacityClass = isSupported() ? '' : 'opacity-50';
@@ -79,7 +77,9 @@ const TwoslashToggle: Component<TwoslashToggleProps> = (props) => {
       >
         {toggleState() === 'disabled' && <div class="i-lucide-x w-14px h-14px" />}
         {toggleState() === 'enabled-supported' && <div class="i-lucide-check w-14px h-14px" />}
-        {toggleState() === 'enabled-unsupported' && <div class="i-lucide-alert-circle w-14px h-14px" />}
+        {toggleState() === 'enabled-unsupported' && (
+          <div class="i-lucide-alert-circle w-14px h-14px" />
+        )}
         <span>TwoSlash</span>
       </Tooltip.Trigger>
       <Tooltip.Positioner>
@@ -92,8 +92,8 @@ const TwoslashToggle: Component<TwoslashToggleProps> = (props) => {
             <div>
               <div class="font-600 mb-4px">TwoSlash Not Supported</div>
               <div class="text-12px opacity-90">
-                TwoSlash is only available for TypeScript, TSX, JavaScript, and JSX files. 
-                Current language: <span class="font-600">{getLanguageDisplayName(props.language)}</span>
+                TwoSlash is only available for TypeScript, TSX, JavaScript, and JSX files. Current
+                language: <span class="font-600">{getLanguageDisplayName(props.language)}</span>
               </div>
             </div>
           </div>

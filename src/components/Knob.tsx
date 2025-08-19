@@ -17,68 +17,68 @@ const Knob: Component<KnobProps> = (props) => {
   const [isHovered, setIsHovered] = createSignal(false);
   let knobRef: HTMLDivElement | undefined;
   let inputRef: HTMLInputElement | undefined;
-  
+
   const size = () => props.size || 80;
   const step = () => props.step || 1;
-  
+
   // Rotation range: -135° to +135° (270° total range with 90° dead zone at bottom)
   const MIN_ANGLE = -135;
   const MAX_ANGLE = 135;
   const ANGLE_RANGE = MAX_ANGLE - MIN_ANGLE;
-  
+
   const normalizedValue = () => {
     const range = props.max - props.min;
     return (props.value - props.min) / range;
   };
-  
+
   const rotation = () => {
     return MIN_ANGLE + normalizedValue() * ANGLE_RANGE;
   };
-  
+
   const angleToValue = (angleDeg: number): number => {
     // Clamp angle to valid range
     const clampedAngle = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, angleDeg));
-    
+
     // Convert angle to normalized value (0-1)
     const normalized = (clampedAngle - MIN_ANGLE) / ANGLE_RANGE;
-    
+
     // Convert to actual value
     const range = props.max - props.min;
     let value = props.min + normalized * range;
-    
+
     // Apply stepping
     if (step()) {
       value = Math.round(value / step()) * step();
     }
-    
+
     return Math.max(props.min, Math.min(props.max, value));
   };
-  
+
   const handleMouseDown = (e: MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    
+
     if (!knobRef) return;
     const rect = knobRef.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
+
     const updateValue = (clientX: number, clientY: number) => {
       // Calculate angle from center to mouse position
       const deltaX = clientX - centerX;
       const deltaY = clientY - centerY;
-      
+
       // Get angle in radians, then convert to degrees
       // atan2 returns angle from -π to π, with 0 pointing right
       let angleRad = Math.atan2(deltaY, deltaX);
       let angleDeg = angleRad * (180 / Math.PI);
-      
+
       // Rotate coordinate system so 0° is at top
       angleDeg = angleDeg + 90;
-      
+
       // Normalize to -180 to 180 range
       if (angleDeg > 180) angleDeg -= 360;
-      
+
       // Check if we're in the dead zone (bottom 90°)
       if (angleDeg > MAX_ANGLE && angleDeg <= 180) {
         // Snap to max if closer to right side
@@ -87,42 +87,42 @@ const Knob: Component<KnobProps> = (props) => {
         // Snap to min if closer to left side
         angleDeg = MIN_ANGLE;
       }
-      
+
       // Convert angle to value and update
       const newValue = angleToValue(angleDeg);
       if (newValue !== props.value) {
         props.onChange(newValue);
       }
     };
-    
+
     // Set initial value based on click position
     updateValue(e.clientX, e.clientY);
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       updateValue(e.clientX, e.clientY);
     };
-    
+
     const handleMouseUp = () => {
       setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
-  
+
   const handleWheel = (e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -step() : step();
     const newValue = Math.max(props.min, Math.min(props.max, props.value + delta));
     props.onChange(newValue);
   };
-  
+
   const handleKeyDown = (e: KeyboardEvent) => {
     let newValue = props.value;
     const bigStep = step() * 10;
-    
+
     switch (e.key) {
       case 'ArrowUp':
       case 'ArrowRight':
@@ -153,50 +153,50 @@ const Knob: Component<KnobProps> = (props) => {
       default:
         return;
     }
-    
+
     props.onChange(newValue);
   };
-  
+
   const handleInputChange = (e: InputEvent) => {
     const target = e.target as HTMLInputElement;
     let value = target.value;
-    
+
     // Remove any non-numeric characters and units
     value = value.replace(/[^\d.-]/g, '');
-    
+
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
       const newValue = Math.max(props.min, Math.min(props.max, numValue));
       props.onChange(newValue);
     }
   };
-  
+
   const handleInputFocus = (e: FocusEvent) => {
     const target = e.target as HTMLInputElement;
     // Remove formatting on focus to allow easy editing
     target.value = props.value.toString();
     target.select();
   };
-  
+
   const handleInputBlur = (e: FocusEvent) => {
     const target = e.target as HTMLInputElement;
     // Restore formatting on blur
     target.value = props.format ? props.format(props.value) : props.value.toString();
   };
-  
+
   const handleInputKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       (e.target as HTMLInputElement).blur();
     }
   };
-  
+
   onMount(() => {
     if (knobRef) {
       knobRef.addEventListener('wheel', handleWheel, { passive: false });
     }
   });
-  
+
   return (
     <div class="flex items-center gap-3">
       <div class="relative group">
@@ -240,7 +240,7 @@ const Knob: Component<KnobProps> = (props) => {
               border: '1px solid rgba(255, 255, 255, 0.18)',
             }}
           />
-          
+
           {/* Inner knob surface - glass */}
           <div
             class="absolute rounded-full overflow-hidden"
@@ -271,7 +271,7 @@ const Knob: Component<KnobProps> = (props) => {
                 `,
               }}
             />
-            
+
             {/* Subtle grip pattern */}
             <div
               class="absolute inset-0 rounded-full opacity-30"
@@ -289,7 +289,7 @@ const Knob: Component<KnobProps> = (props) => {
                 `,
               }}
             />
-            
+
             {/* Position indicator - glowing */}
             <div
               class="absolute"
@@ -299,18 +299,19 @@ const Knob: Component<KnobProps> = (props) => {
                 width: '3px',
                 height: '16px',
                 transform: 'translateX(-50%)',
-                background: isHovered() || isFocused() 
-                  ? 'linear-gradient(180deg, #60a5fa, #3b82f6)'
-                  : 'linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4))',
+                background:
+                  isHovered() || isFocused()
+                    ? 'linear-gradient(180deg, #60a5fa, #3b82f6)'
+                    : 'linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4))',
                 'border-radius': '2px',
                 'box-shadow': `
-                  0 0 6px ${(isHovered() || isFocused()) ? 'rgba(59,130,246,0.6)' : 'rgba(255,255,255,0.5)'},
+                  0 0 6px ${isHovered() || isFocused() ? 'rgba(59,130,246,0.6)' : 'rgba(255,255,255,0.5)'},
                   inset 0 0 2px rgba(255,255,255,0.3)
                 `,
                 transition: 'all 0.2s ease',
               }}
             />
-            
+
             {/* Center glass detail */}
             <div
               class="absolute rounded-full"
@@ -335,7 +336,7 @@ const Knob: Component<KnobProps> = (props) => {
               }}
             />
           </div>
-          
+
           {/* Ambient light effect */}
           <div
             class="absolute inset-0 rounded-full pointer-events-none"
@@ -349,7 +350,7 @@ const Knob: Component<KnobProps> = (props) => {
               transition: 'opacity 0.3s ease',
             }}
           />
-          
+
           {/* Focus ring */}
           {isFocused() && (
             <div
@@ -360,7 +361,7 @@ const Knob: Component<KnobProps> = (props) => {
             />
           )}
         </div>
-        
+
         {/* Value markers around the knob */}
         <svg
           class="absolute inset-0 pointer-events-none"
@@ -379,7 +380,7 @@ const Knob: Component<KnobProps> = (props) => {
             stroke-width="1"
             opacity="0.2"
           />
-          
+
           {/* Tick marks */}
           {Array.from({ length: 11 }).map((_, i) => {
             const angle = -135 + (i * 270) / 10;
@@ -390,7 +391,7 @@ const Knob: Component<KnobProps> = (props) => {
             const y1 = size() / 2 + Math.sin(rad) * innerRadius;
             const x2 = size() / 2 + Math.cos(rad) * outerRadius;
             const y2 = size() / 2 + Math.sin(rad) * outerRadius;
-            
+
             return (
               <line
                 x1={x1}
@@ -405,12 +406,10 @@ const Knob: Component<KnobProps> = (props) => {
           })}
         </svg>
       </div>
-      
+
       {/* Label and editable value */}
       <div class="flex flex-col gap-1">
-        {props.label && (
-          <div class="text-xs font-medium opacity-70">{props.label}</div>
-        )}
+        {props.label && <div class="text-xs font-medium opacity-70">{props.label}</div>}
         <input
           ref={inputRef}
           type="text"

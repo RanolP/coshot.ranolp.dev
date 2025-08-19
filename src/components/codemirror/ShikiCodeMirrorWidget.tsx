@@ -1,13 +1,34 @@
 import type { Component } from 'solid-js';
 import { createSignal, onCleanup, onMount, createEffect } from 'solid-js';
 import { EditorView } from 'codemirror';
-import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { bracketMatching, defaultHighlightStyle, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting } from '@codemirror/language';
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+} from '@codemirror/language';
 import { lintGutter, lintKeymap } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
 import { Compartment, EditorState } from '@codemirror/state';
-import { drawSelection, dropCursor, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers, rectangularSelection } from '@codemirror/view';
+import {
+  drawSelection,
+  dropCursor,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  keymap,
+  lineNumbers,
+  rectangularSelection,
+} from '@codemirror/view';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
 import SearchableThemeSelector from '../SearchableThemeSelector';
@@ -104,16 +125,12 @@ interface ShikiCodeMirrorWidgetProps {
   lineWrapping?: boolean;
 }
 
-const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
-  props,
-) => {
+const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => {
   let editorRef: HTMLDivElement | undefined;
   let highlighterInstance: ShikiHighlighter | undefined;
   let previousTwoslashEnabled = false;
   let themeCompartment: Compartment | undefined;
-  const [editorView, setEditorView] = createSignal<EditorView | undefined>(
-    undefined,
-  );
+  const [editorView, setEditorView] = createSignal<EditorView | undefined>(undefined);
   const [isReady, setIsReady] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(true);
   const [themeColors, setThemeColors] = createSignal<{
@@ -129,11 +146,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   });
 
   const updateThemeColors = () => {
-    if (
-      highlighterInstance &&
-      highlighterInstance.isInitialized() &&
-      props.theme
-    ) {
+    if (highlighterInstance && highlighterInstance.isInitialized() && props.theme) {
       const colors = highlighterInstance.getBasicThemeColors(props.theme);
       setThemeColors(colors);
     }
@@ -170,10 +183,9 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
         backgroundColor: `${selectionBg} !important`,
       },
-      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground':
-        {
-          backgroundColor: `${selectionBg} !important`,
-        },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
+        backgroundColor: `${selectionBg} !important`,
+      },
       '.cm-content ::selection': {
         backgroundColor: `${selectionBg} !important`,
       },
@@ -270,7 +282,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           ...foldKeymap,
           ...completionKeymap,
           ...lintKeymap,
-          indentWithTab
+          indentWithTab,
         ]),
         lintGutter(),
         themeCompartment.of(createThemeExtension()),
@@ -280,7 +292,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
           }
         }),
       ];
-      
+
       // Add line wrapping if specified
       if (props.lineWrapping) {
         extensions.push(EditorView.lineWrapping);
@@ -413,7 +425,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
   });
 
   return (
-    <div class={`shiki-codemirror-widget ${props.className || ''}`}
+    <div
+      class={`shiki-codemirror-widget ${props.className || ''}`}
       style={{
         display: 'flex',
         'flex-direction': 'column',
@@ -452,7 +465,8 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
               color: themeColors().fg,
               'font-size': '14px',
               opacity: '0.8',
-              'font-family': 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+              'font-family':
+                'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
             }}
           >
             Initializing editor...

@@ -11,15 +11,15 @@ interface FeaturesModalProps {
 const FeaturesModal: Component<FeaturesModalProps> = (props) => {
   const { colors } = useTheme();
   const [showTour, setShowTour] = createSignal(false);
-  
+
   // Initialize from localStorage with default false
   const getInitialMacState = () => {
     const stored = localStorage.getItem('coshot-is-mac');
     return stored === 'true';
   };
-  
+
   const [isMac, setIsMac] = createSignal(getInitialMacState());
-  
+
   // Save to localStorage when changed
   const handleMacToggle = (checked: boolean) => {
     setIsMac(checked);
@@ -48,15 +48,9 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
           <div
             class="rounded-12px max-w-800px w-full max-h-[90vh] overflow-y-auto p-6"
             style={{
-              'background-color':
-                colors()?.['panel.background'] ||
-                'var(--theme-panel-background)',
-              border: `1px solid ${
-                colors()?.['panel.border'] || 'var(--theme-panel-border)'
-              }`,
-              color:
-                colors()?.['editor.foreground'] ||
-                'var(--theme-editor-foreground)',
+              'background-color': colors()?.['panel.background'] || 'var(--theme-panel-background)',
+              border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
+              color: colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
             }}
           >
             <div class="flex justify-between items-center mb-16px">
@@ -81,31 +75,23 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                   'background-color':
                     colors()?.['editor.lineHighlightBackground'] ||
                     'var(--theme-editor-lineHighlightBackground)',
-                  border: `1px solid ${
-                    colors()?.['panel.border'] || 'var(--theme-panel-border)'
-                  }`,
+                  border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
                 }}
               >
-                <h3 class="m-0 mb-8px text-14px font-600 opacity-90">
-                  ✨ What is Coshot?
-                </h3>
+                <h3 class="m-0 mb-8px text-14px font-600 opacity-90">✨ What is Coshot?</h3>
                 <p class="m-0 mb-12px text-13px opacity-80">
-                  Create beautiful, shareable code screenshots with a
-                  full-featured CodeMirror editor. Features TypeScript type
-                  checking via TwoSlash, 60+ themes, and 200+ language
-                  support—perfect for sharing code snippets with visible type
-                  information and error detection.
+                  Create beautiful, shareable code screenshots with a full-featured CodeMirror
+                  editor. Features TypeScript type checking via TwoSlash, 60+ themes, and 200+
+                  language support—perfect for sharing code snippets with visible type information
+                  and error detection.
                 </p>
                 <div class="flex justify-end">
                   <button
                     class="px-16px py-8px rounded-6px border-none cursor-pointer font-500 text-14px flex items-center gap-6px transition-all"
                     style={{
                       'background-color':
-                        colors()?.['button.background'] ||
-                        'var(--theme-button-background)',
-                      color:
-                        colors()?.['button.foreground'] ||
-                        'var(--theme-button-foreground)',
+                        colors()?.['button.background'] || 'var(--theme-button-background)',
+                      color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)',
                     }}
                     onClick={startTour}
                     onMouseEnter={(e) => {
@@ -115,8 +101,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor =
-                        colors()?.['button.background'] ||
-                        'var(--theme-button-background)';
+                        colors()?.['button.background'] || 'var(--theme-button-background)';
                     }}
                   >
                     <div class="i-lucide:play-circle w-16px h-16px" />
@@ -138,9 +123,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                   }}
                 >
                   <div class="flex items-center justify-between mb-12px">
-                    <h3 class="m-0 text-16px font-600 opacity-80">
-                      ⌨️ Keyboard Shortcuts
-                    </h3>
+                    <h3 class="m-0 text-16px font-600 opacity-80">⌨️ Keyboard Shortcuts</h3>
                     <label class="flex items-center gap-4px text-12px cursor-pointer">
                       <input
                         type="checkbox"
@@ -163,8 +146,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           {isMac() ? '⌘' : 'Ctrl'}
@@ -179,8 +161,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           F
@@ -189,9 +170,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                       <div class="flex justify-center">
                         <div class="i-lucide:arrow-right w-12px h-12px opacity-30" />
                       </div>
-                      <span class="text-13px">
-                        Search in code
-                      </span>
+                      <span class="text-13px">Search in code</span>
                     </div>
                     <div class="grid grid-cols-[1fr_20px_1fr] items-center gap-8px p-6px rounded-6px transition-all hover:bg-black/3 dark:hover:bg-white/3">
                       <div class="flex items-center gap-2px justify-end">
@@ -204,8 +183,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           {isMac() ? '⌘' : 'Ctrl'}
@@ -220,8 +198,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           G
@@ -230,9 +207,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                       <div class="flex justify-center">
                         <div class="i-lucide:arrow-right w-12px h-12px opacity-30" />
                       </div>
-                      <span class="text-13px">
-                        Find next match
-                      </span>
+                      <span class="text-13px">Find next match</span>
                     </div>
                     <div class="grid grid-cols-[1fr_20px_1fr] items-center gap-8px p-6px rounded-6px transition-all hover:bg-black/3 dark:hover:bg-white/3">
                       <div class="flex items-center justify-end">
@@ -245,8 +220,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           Tab
@@ -255,9 +229,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                       <div class="flex justify-center">
                         <div class="i-lucide:arrow-right w-12px h-12px opacity-30" />
                       </div>
-                      <span class="text-13px">
-                        Indent / Autocomplete
-                      </span>
+                      <span class="text-13px">Indent / Autocomplete</span>
                     </div>
                     <div class="grid grid-cols-[1fr_20px_1fr] items-center gap-8px p-6px rounded-6px transition-all hover:bg-black/3 dark:hover:bg-white/3">
                       <div class="flex items-center gap-2px justify-end">
@@ -270,8 +242,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           {isMac() ? '⌘' : 'Ctrl'}
@@ -286,8 +257,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                             'box-shadow':
                               '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             color:
-                              colors()?.['editor.foreground'] ||
-                              'var(--theme-editor-foreground)',
+                              colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
                           }}
                         >
                           Space
@@ -296,9 +266,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                       <div class="flex justify-center">
                         <div class="i-lucide:arrow-right w-12px h-12px opacity-30" />
                       </div>
-                      <span class="text-13px">
-                        Trigger suggestions
-                      </span>
+                      <span class="text-13px">Trigger suggestions</span>
                     </div>
                   </div>
                 </div>
@@ -316,9 +284,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                 >
                   <h3 class="m-0 mb-12px text-16px font-600 opacity-80">
                     🔮 TwoSlash Notations{' '}
-                    <span class="text-11px font-400 opacity-60">
-                      (TS/JS only)
-                    </span>
+                    <span class="text-11px font-400 opacity-60">(TS/JS only)</span>
                   </h3>
                   <div class="space-y-6px">
                     <div class="flex items-center gap-8px">
@@ -326,124 +292,98 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // ^?
                       </code>
-                      <span class="text-12px opacity-90">
-                        Show type info
-                      </span>
+                      <span class="text-12px opacity-90">Show type info</span>
                     </div>
                     <div class="flex items-center gap-8px">
                       <code
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // ^|
                       </code>
-                      <span class="text-12px opacity-90">
-                        Show completions
-                      </span>
+                      <span class="text-12px opacity-90">Show completions</span>
                     </div>
                     <div class="flex items-center gap-8px">
                       <code
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // ^^^
                       </code>
-                      <span class="text-12px opacity-90">
-                        Highlight range
-                      </span>
+                      <span class="text-12px opacity-90">Highlight range</span>
                     </div>
                     <div class="flex items-center gap-8px">
                       <code
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // @noErrors
                       </code>
-                      <span class="text-12px opacity-90">
-                        Hide errors
-                      </span>
+                      <span class="text-12px opacity-90">Hide errors</span>
                     </div>
                     <div class="flex items-center gap-8px">
                       <code
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // ---cut---
                       </code>
-                      <span class="text-12px opacity-90">
-                        Hide code above
-                      </span>
+                      <span class="text-12px opacity-90">Hide code above</span>
                     </div>
                     <div class="flex items-center gap-8px">
                       <code
                         class="px-5px py-1px rounded-3px font-mono text-11px whitespace-nowrap"
                         style={{
                           'background-color':
-                            colors()?.['panel.background'] ||
-                            'var(--theme-panel-background)',
+                            colors()?.['panel.background'] || 'var(--theme-panel-background)',
                           border: `1px solid ${
-                            colors()?.['panel.border'] ||
-                            'var(--theme-panel-border)'
+                            colors()?.['panel.border'] || 'var(--theme-panel-border)'
                           }`,
                         }}
                       >
                         // @filename: x.ts
                       </code>
-                      <span class="text-12px opacity-90">
-                        Set filename
-                      </span>
+                      <span class="text-12px opacity-90">Set filename</span>
                     </div>
                     <div
                       class="mt-10px p-8px rounded-4px"
                       style={{
                         'background-color':
-                          colors()?.['panel.background'] ||
-                          'var(--theme-panel-background)',
+                          colors()?.['panel.background'] || 'var(--theme-panel-background)',
                         border: `1px solid ${
-                          colors()?.['panel.border'] ||
-                          'var(--theme-panel-border)'
+                          colors()?.['panel.border'] || 'var(--theme-panel-border)'
                         }`,
                       }}
                     >
@@ -453,9 +393,7 @@ const FeaturesModal: Component<FeaturesModalProps> = (props) => {
                         rel="noopener noreferrer"
                         class="text-11px no-underline flex items-center gap-4px justify-center hover:underline"
                         style={{
-                          color:
-                            colors()?.['focusBorder'] ||
-                            'var(--theme-focusBorder)',
+                          color: colors()?.['focusBorder'] || 'var(--theme-focusBorder)',
                         }}
                       >
                         <div class="i-lucide:external-link w-10px h-10px" />

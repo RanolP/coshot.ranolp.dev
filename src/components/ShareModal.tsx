@@ -55,12 +55,12 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
   createEffect(async () => {
     if (!props.isOpen || !highlighter) return;
-    
+
     // Set default background color based on theme
     const themeColors = await highlighter.getThemeColors(props.theme);
-    setOptions(prev => ({
+    setOptions((prev) => ({
       ...prev,
-      backgroundColor: prev.backgroundColor || themeColors?.['editor.background'] || '#1e1e1e'
+      backgroundColor: prev.backgroundColor || themeColors?.['editor.background'] || '#1e1e1e',
     }));
 
     // Generate preview HTML
@@ -72,54 +72,61 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
     try {
       await highlighter.loadLanguage(props.language);
-      
+
       let html = '';
       const themeColors = await highlighter.getThemeColors(props.theme);
       const newTooltips: TwoslashTooltip[] = [];
-      
+
       let cleanCode = props.code;
-      
-      if (props.enableTwoslash && ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language)) {
+
+      if (
+        props.enableTwoslash &&
+        ['typescript', 'tsx', 'javascript', 'jsx'].includes(props.language)
+      ) {
         // Render with TwoSlash but keepNotations: false for screenshots
         const result = await highlighter.highlightWithTwoslash(
           props.code,
           props.language as BundledLanguage,
           props.theme,
-          false // keepNotations: false for clean screenshots
+          false, // keepNotations: false for clean screenshots
         );
-        
+
         // Use the cleaned code from twoslash result (without notations)
         cleanCode = result.twoslashData?.code || props.code;
-        
+
         // Re-tokenize the clean code for display
         const cleanTokens = await highlighter.tokenize(
           cleanCode,
           props.language as BundledLanguage,
-          props.theme
+          props.theme,
         );
-        
+
         // Build HTML with twoslash annotations
-        html = '<div class="shiki-container" style="font-family: \'Cascadia Code\', \'JetBrains Mono\', monospace; font-size: 14px; line-height: 1.5; position: relative;">';
-        
+        html =
+          '<div class="shiki-container" style="font-family: \'Cascadia Code\', \'JetBrains Mono\', monospace; font-size: 14px; line-height: 1.5; position: relative;">';
+
         cleanTokens.forEach((line, lineIndex) => {
           const lineNumber = lineIndex + 1;
-          console.log(`Generating HTML for line ${lineNumber}:`, cleanCode.split('\n')[lineIndex]?.substring(0, 50));
+          console.log(
+            `Generating HTML for line ${lineNumber}:`,
+            cleanCode.split('\n')[lineIndex]?.substring(0, 50),
+          );
           html += `<div class="line" data-line="${lineNumber}" style="display: flex; min-height: 21px;">`;
-          
+
           if (options().showLineNumbers) {
             html += `<span class="line-number" style="user-select: none; width: 3em; text-align: right; padding-right: 1em; opacity: 0.5;">${lineNumber}</span>`;
           }
-          
+
           html += `<span class="line-content" data-line-content="${lineNumber}" style="flex: 1; white-space: pre;">`;
-          
+
           // Render the clean tokens
           html += highlighter.renderTokensToHtml(line.tokens);
-          
+
           html += '</span></div>';
         });
-        
+
         html += '</div>';
-        
+
         // Process twoslash tooltips separately (after the main HTML is built)
         if (result.twoslashData && result.twoslashData.nodes) {
           console.log('=== TWOSLASH DEBUG ===');
@@ -127,27 +134,27 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           console.log('Twoslash code (from result):', result.twoslashData.code);
           console.log('Clean code (what we use):', cleanCode);
           console.log('Are they the same?', result.twoslashData.code === cleanCode);
-          
+
           // Let's see if the line numbers in nodes match the clean code
           const cleanLines = cleanCode.split('\n');
-          result.twoslashData.nodes.forEach(node => {
+          result.twoslashData.nodes.forEach((node) => {
             if (node.type === 'query') {
               console.log(`Query node line ${node.line}:`, cleanLines[node.line - 1]);
             }
           });
-          
+
           for (const node of result.twoslashData.nodes) {
             if (node.type === 'query') {
               // Use start position to find the actual line and character in clean code
               const tooltipId = `tooltip-${node.start}`;
               console.log('Processing query node:', node);
-              
+
               // Calculate the actual line and character from start position
               let currentPos = 0;
               let actualLine = 1;
               let actualCharacter = 0;
               const cleanLines = cleanCode.split('\n');
-              
+
               for (let i = 0; i < cleanLines.length; i++) {
                 const lineLength = cleanLines[i].length + 1; // +1 for newline
                 if (currentPos + lineLength > node.start) {
@@ -157,9 +164,13 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 }
                 currentPos += lineLength;
               }
-              
-              console.log('Calculated position:', { actualLine, actualCharacter, start: node.start });
-              
+
+              console.log('Calculated position:', {
+                actualLine,
+                actualCharacter,
+                start: node.start,
+              });
+
               // Syntax highlight the tooltip text
               let tooltipHtml = '';
               if (node.text) {
@@ -168,17 +179,17 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                   const tooltipTokens = await highlighter.tokenize(
                     node.text,
                     'typescript' as BundledLanguage,
-                    props.theme
+                    props.theme,
                   );
-                  tooltipHtml = tooltipTokens.map(line => 
-                    highlighter.renderTokensToHtml(line.tokens)
-                  ).join('<br>');
+                  tooltipHtml = tooltipTokens
+                    .map((line) => highlighter.renderTokensToHtml(line.tokens))
+                    .join('<br>');
                 } catch {
                   // Fallback to plain text
                   tooltipHtml = node.text.replace(/\n/g, '<br>');
                 }
               }
-              
+
               newTooltips.push({
                 id: tooltipId,
                 line: actualLine,
@@ -187,7 +198,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 html: tooltipHtml,
                 type: node.type as 'hover' | 'query',
                 x: -1000, // Off-screen initially to prevent glitch
-                y: -1000  // Off-screen initially to prevent glitch
+                y: -1000, // Off-screen initially to prevent glitch
               });
             }
           }
@@ -197,38 +208,39 @@ const ShareModal: Component<ShareModalProps> = (props) => {
         const tokens = await highlighter.tokenize(
           props.code,
           props.language as BundledLanguage,
-          props.theme
+          props.theme,
         );
-        
-        html = '<div class="shiki-container" style="font-family: \'Cascadia Code\', \'JetBrains Mono\', monospace; font-size: 14px; line-height: 1.5;">';
-        
+
+        html =
+          '<div class="shiki-container" style="font-family: \'Cascadia Code\', \'JetBrains Mono\', monospace; font-size: 14px; line-height: 1.5;">';
+
         tokens.forEach((line) => {
           html += '<div class="line" style="display: flex; min-height: 21px;">';
-          
+
           if (options().showLineNumbers) {
             html += `<span class="line-number" style="user-select: none; width: 3em; text-align: right; padding-right: 1em; opacity: 0.5;">${line.line}</span>`;
           }
-          
+
           html += '<span class="line-content" style="flex: 1; white-space: pre;">';
           html += highlighter.renderTokensToHtml(line.tokens);
           html += '</span></div>';
         });
-        
+
         html += '</div>';
       }
-      
+
       setPreviewHtml(html);
       setTooltips(newTooltips);
       setTooltipsInitialized(false); // Reset initialization state
-      
+
       // Calculate actual tooltip positions after DOM update
       setTimeout(() => {
         if (!previewRef || !containerRef) return;
-        
+
         // Get the clean code (without notations) for position calculation
         const codeLines = cleanCode.split('\n');
-        
-        const updatedTooltips = newTooltips.map(tooltip => {
+
+        const updatedTooltips = newTooltips.map((tooltip) => {
           console.log('Looking for line element:', tooltip.line);
           const lineContent = previewRef.querySelector(`[data-line-content="${tooltip.line}"]`);
           console.log('Found element:', lineContent);
@@ -236,24 +248,24 @@ const ShareModal: Component<ShareModalProps> = (props) => {
             console.error('Could not find line element for line:', tooltip.line);
             return tooltip;
           }
-          
+
           // Use the character position directly from our calculation
           const lineText = codeLines[tooltip.line - 1] || '';
-          
+
           console.log('Tooltip positioning:', {
             line: tooltip.line,
             character: tooltip.character,
-            lineText
+            lineText,
           });
-          
+
           // Measure the actual text width in the DOM
           const lineElement = lineContent as HTMLElement;
           const textContent = lineElement.textContent || '';
-          
+
           // Create a range to measure text up to the target position
           const range = document.createRange();
           const textNode = lineElement.firstChild || lineElement;
-          
+
           let textWidth = 0;
           try {
             if (textNode.nodeType === Node.TEXT_NODE) {
@@ -264,7 +276,8 @@ const ShareModal: Component<ShareModalProps> = (props) => {
             } else {
               // Fallback to measuring with temporary element
               const measurer = document.createElement('span');
-              measurer.style.cssText = 'position: absolute; visibility: hidden; white-space: pre; font-family: "Cascadia Code", "JetBrains Mono", monospace; font-size: 14px;';
+              measurer.style.cssText =
+                'position: absolute; visibility: hidden; white-space: pre; font-family: "Cascadia Code", "JetBrains Mono", monospace; font-size: 14px;';
               measurer.textContent = textContent.substring(0, tooltip.character);
               document.body.appendChild(measurer);
               textWidth = measurer.clientWidth;
@@ -275,29 +288,28 @@ const ShareModal: Component<ShareModalProps> = (props) => {
             // Fallback to approximate positioning
             textWidth = tooltip.character * 8;
           }
-          
+
           // Get positions relative to the outer container (which has the padding)
           const lineContentRect = lineContent.getBoundingClientRect();
           const containerRect = containerRef.getBoundingClientRect();
           const previewRect = previewRef.getBoundingClientRect();
-          
+
           // Calculate position relative to container, accounting for preview's position within container
           const relativeX = lineContentRect.left - containerRect.left + textWidth;
           // Position above the line - estimate tooltip height (about 40px) and subtract it
           const relativeY = lineContentRect.top - containerRect.top - 40;
-          
+
           return {
             ...tooltip,
             x: relativeX,
-            y: relativeY
+            y: relativeY,
           };
         });
-        
+
         setTooltips(updatedTooltips);
         // Mark tooltips as initialized after first positioning
         setTimeout(() => setTooltipsInitialized(true), 50);
       }, 100);
-      
     } catch (error) {
       console.error('Failed to generate preview:', error);
     }
@@ -313,45 +325,47 @@ const ShareModal: Component<ShareModalProps> = (props) => {
   const handleTooltipDragStart = (e: MouseEvent, tooltipId: string) => {
     e.preventDefault();
     setDraggedTooltip(tooltipId);
-    
+
     const startX = e.clientX;
     const startY = e.clientY;
-    const tooltip = tooltips().find(t => t.id === tooltipId);
+    const tooltip = tooltips().find((t) => t.id === tooltipId);
     if (!tooltip) return;
-    
+
     const originalX = tooltip.x;
     const originalY = tooltip.y;
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
-      
-      setTooltips(prev => prev.map(t => 
-        t.id === tooltipId 
-          ? { ...t, x: originalX + deltaX, y: originalY + deltaY }
-          : t
-      ));
+
+      setTooltips((prev) =>
+        prev.map((t) =>
+          t.id === tooltipId ? { ...t, x: originalX + deltaX, y: originalY + deltaY } : t,
+        ),
+      );
     };
-    
+
     const handleMouseUp = () => {
       setDraggedTooltip(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleCapture = async () => {
     if (!containerRef) return;
-    
+
     setIsCapturing(true);
-    
+
     try {
       const canvas = await html2canvas(containerRef, {
         scale: options().scale,
-        backgroundColor: options().transparentBackground ? 'transparent' : options().backgroundColor,
+        backgroundColor: options().transparentBackground
+          ? 'transparent'
+          : options().backgroundColor,
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -370,7 +384,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           }
         },
         `image/${options().format}`,
-        options().quality
+        options().quality,
       );
     } catch (error) {
       console.error('Failed to capture screenshot:', error);
@@ -381,13 +395,15 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
   const handleCopyToClipboard = async () => {
     if (!containerRef) return;
-    
+
     setIsCapturing(true);
-    
+
     try {
       const canvas = await html2canvas(containerRef, {
         scale: options().scale,
-        backgroundColor: options().transparentBackground ? 'transparent' : options().backgroundColor,
+        backgroundColor: options().transparentBackground
+          ? 'transparent'
+          : options().backgroundColor,
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -408,7 +424,7 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
   return (
     <Show when={props.isOpen}>
-      <div 
+      <div
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4"
         onClick={(e) => {
           // Only close if clicking the backdrop itself, not the modal content
@@ -417,17 +433,18 @@ const ShareModal: Component<ShareModalProps> = (props) => {
           }
         }}
       >
-        <div 
+        <div
           class="rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           style={{
-            'background-color': colors()?.['dropdown.background'] || 'var(--theme-dropdown-background)',
-            color: colors()?.['dropdown.foreground'] || 'var(--theme-dropdown-foreground)'
+            'background-color':
+              colors()?.['dropdown.background'] || 'var(--theme-dropdown-background)',
+            color: colors()?.['dropdown.foreground'] || 'var(--theme-dropdown-foreground)',
           }}
         >
-          <div 
+          <div
             class="flex items-center justify-between p-4 flex-shrink-0"
             style={{
-              'border-bottom': `1px solid ${colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'}`
+              'border-bottom': `1px solid ${colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'}`,
             }}
           >
             <h2 class="text-lg font-semibold">Share Options</h2>
@@ -437,10 +454,11 @@ const ShareModal: Component<ShareModalProps> = (props) => {
               style={{
                 'background-color': 'transparent',
                 outline: 'none',
-                border: 'none'
+                border: 'none',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors()?.['list.hoverBackground'] || 'var(--theme-list-hoverBackground)';
+                e.currentTarget.style.backgroundColor =
+                  colors()?.['list.hoverBackground'] || 'var(--theme-list-hoverBackground)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -452,9 +470,12 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
           <div class="flex flex-col flex-1 overflow-hidden">
             {/* Settings Bar at Top */}
-            <div class="px-4 py-3 border-b flex items-center gap-6 overflow-x-auto flex-shrink-0" style={{
-              'border-color': colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)'
-            }}>
+            <div
+              class="px-4 py-3 border-b flex items-center gap-6 overflow-x-auto flex-shrink-0"
+              style={{
+                'border-color': colors()?.['dropdown.border'] || 'var(--theme-dropdown-border)',
+              }}
+            >
               <Knob
                 value={options().scale}
                 onChange={(value) => setOptions({ ...options(), scale: value })}
@@ -481,7 +502,9 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 <input
                   type="checkbox"
                   checked={options().transparentBackground}
-                  onChange={(e) => setOptions({ ...options(), transparentBackground: e.currentTarget.checked })}
+                  onChange={(e) =>
+                    setOptions({ ...options(), transparentBackground: e.currentTarget.checked })
+                  }
                 />
                 <span class="text-sm">Transparent</span>
               </label>
@@ -490,7 +513,9 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 <input
                   type="checkbox"
                   checked={options().showLineNumbers}
-                  onChange={(e) => setOptions({ ...options(), showLineNumbers: e.currentTarget.checked })}
+                  onChange={(e) =>
+                    setOptions({ ...options(), showLineNumbers: e.currentTarget.checked })
+                  }
                 />
                 <span class="text-sm">Line Numbers</span>
               </label>
@@ -499,12 +524,15 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                 <label class="text-sm">Format:</label>
                 <select
                   value={options().format}
-                  onChange={(e) => setOptions({ ...options(), format: e.currentTarget.value as 'png' | 'jpeg' })}
+                  onChange={(e) =>
+                    setOptions({ ...options(), format: e.currentTarget.value as 'png' | 'jpeg' })
+                  }
                   class="px-2 py-1 rounded text-sm"
                   style={{
-                    'background-color': colors()?.['input.background'] || 'var(--theme-input-background)',
+                    'background-color':
+                      colors()?.['input.background'] || 'var(--theme-input-background)',
                     border: `1px solid ${colors()?.['input.border'] || 'var(--theme-input-border)'}`,
-                    color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)'
+                    color: colors()?.['input.foreground'] || 'var(--theme-input-foreground)',
                   }}
                 >
                   <option value="png">PNG</option>
@@ -521,7 +549,9 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                     max="1"
                     step="0.05"
                     value={options().quality}
-                    onInput={(e) => setOptions({ ...options(), quality: parseFloat(e.currentTarget.value) })}
+                    onInput={(e) =>
+                      setOptions({ ...options(), quality: parseFloat(e.currentTarget.value) })
+                    }
                     class="w-20"
                   />
                   <span class="text-sm opacity-70">{Math.round(options().quality * 100)}%</span>
@@ -535,32 +565,36 @@ const ShareModal: Component<ShareModalProps> = (props) => {
 
             {/* Preview Section - Full Width */}
             <div class="flex-1 p-4 overflow-auto flex items-center justify-center relative">
-              <div 
+              <div
                 ref={containerRef}
                 class="relative inline-block"
                 style={{
                   padding: `${options().padding}px`,
-                  'background-color': options().transparentBackground ? 'transparent' : options().backgroundColor,
-                  'background-image': options().transparentBackground ? 
-                    'repeating-conic-gradient(#80808010 0% 25%, transparent 0% 50%) 50% / 20px 20px' : 
-                    'none'
+                  'background-color': options().transparentBackground
+                    ? 'transparent'
+                    : options().backgroundColor,
+                  'background-image': options().transparentBackground
+                    ? 'repeating-conic-gradient(#80808010 0% 25%, transparent 0% 50%) 50% / 20px 20px'
+                    : 'none',
                 }}
               >
-                <div 
+                <div
                   ref={previewRef}
                   innerHTML={previewHtml()}
                   style={{
                     color: colors()?.['editor.foreground'] || 'var(--theme-editor-foreground)',
-                    'background-color': options().transparentBackground ? 'transparent' : colors()?.['editor.background'] || 'var(--theme-editor-background)',
+                    'background-color': options().transparentBackground
+                      ? 'transparent'
+                      : colors()?.['editor.background'] || 'var(--theme-editor-background)',
                     padding: '16px',
                     'border-radius': '8px',
                     position: 'relative',
                     width: 'fit-content',
                     'min-width': '400px',
-                    'max-width': '100%'
+                    'max-width': '100%',
                   }}
                 />
-                
+
                 {/* Twoslash Tooltips */}
                 <For each={tooltips()}>
                   {(tooltip) => (
@@ -570,20 +604,29 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                         left: `${tooltip.x}px`,
                         top: `${tooltip.y}px`,
                         cursor: draggedTooltip() === tooltip.id ? 'grabbing' : 'grab',
-                        transition: tooltipsInitialized() && draggedTooltip() !== tooltip.id ? 'all 0.2s ease' : 'none'
+                        transition:
+                          tooltipsInitialized() && draggedTooltip() !== tooltip.id
+                            ? 'all 0.2s ease'
+                            : 'none',
                       }}
                       onMouseDown={(e) => handleTooltipDragStart(e, tooltip.id)}
                     >
-                      <div 
+                      <div
                         class="px-3 py-2 rounded-md shadow-xl text-sm max-w-md"
                         style={{
-                          'background-color': colors()?.['editorHoverWidget.background'] || colors()?.['dropdown.background'] || '#1e1e2e',
-                          color: colors()?.['editorHoverWidget.foreground'] || colors()?.['dropdown.foreground'] || '#cdd6f4',
+                          'background-color':
+                            colors()?.['editorHoverWidget.background'] ||
+                            colors()?.['dropdown.background'] ||
+                            '#1e1e2e',
+                          color:
+                            colors()?.['editorHoverWidget.foreground'] ||
+                            colors()?.['dropdown.foreground'] ||
+                            '#cdd6f4',
                           border: `1px solid ${colors()?.['editorHoverWidget.border'] || colors()?.['dropdown.border'] || '#313244'}`,
-                          'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4)'
+                          'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4)',
                         }}
                       >
-                        <div 
+                        <div
                           style="margin: 0; font-family: 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-word;"
                           innerHTML={tooltip.html}
                         />
@@ -601,14 +644,15 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                     Drag tooltips to reposition
                   </div>
                 </Show>
-                
+
                 <button
                   onClick={handleCapture}
                   disabled={isCapturing()}
                   class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   style={{
-                    'background-color': colors()?.['button.background'] || 'var(--theme-button-background)',
-                    color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
+                    'background-color':
+                      colors()?.['button.background'] || 'var(--theme-button-background)',
+                    color: colors()?.['button.foreground'] || 'var(--theme-button-foreground)',
                   }}
                 >
                   <div class="i-lucide-download w-4 h-4" />
@@ -619,8 +663,14 @@ const ShareModal: Component<ShareModalProps> = (props) => {
                   disabled={isCapturing()}
                   class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                   style={{
-                    'background-color': colors()?.['button.secondaryBackground'] || colors()?.['button.background'] || 'var(--theme-button-background)',
-                    color: colors()?.['button.secondaryForeground'] || colors()?.['button.foreground'] || 'var(--theme-button-foreground)'
+                    'background-color':
+                      colors()?.['button.secondaryBackground'] ||
+                      colors()?.['button.background'] ||
+                      'var(--theme-button-background)',
+                    color:
+                      colors()?.['button.secondaryForeground'] ||
+                      colors()?.['button.foreground'] ||
+                      'var(--theme-button-foreground)',
                   }}
                 >
                   <div class="i-lucide-copy w-4 h-4" />

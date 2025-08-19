@@ -5,16 +5,16 @@ import presetUno from '@unocss/preset-uno';
 
 export default defineConfig({
   presets: [
-    presetUno(), 
-    presetAttributify(), 
-    presetIcons({ 
+    presetUno(),
+    presetAttributify(),
+    presetIcons({
       scale: 1.2,
       warn: true,
       extraProperties: {
-        'display': 'inline-block',
-        'vertical-align': 'middle'
-      }
-    })
+        display: 'inline-block',
+        'vertical-align': 'middle',
+      },
+    }),
   ],
   shortcuts: [
     [

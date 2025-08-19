@@ -72,12 +72,7 @@ const MyComponent: Component = () => {
 ### HTML Editor with Dark Theme
 
 ```tsx
-<CodeMirrorWidget
-  value="<h1>Hello World</h1>"
-  language="html"
-  theme="dark"
-  height="300px"
-/>
+<CodeMirrorWidget value="<h1>Hello World</h1>" language="html" theme="dark" height="300px" />
 ```
 
 ### Read-only CSS Editor
@@ -166,11 +161,7 @@ const CodeEditor: Component = () => {
 
   return (
     <div>
-      <CodeMirrorWidget
-        value={code()}
-        language="javascript"
-        onChange={setCode}
-      />
+      <CodeMirrorWidget value={code()} language="javascript" onChange={setCode} />
       <div class={isValid() ? 'valid' : 'invalid'}>
         {isValid() ? 'Code is valid' : 'Code is invalid'}
       </div>

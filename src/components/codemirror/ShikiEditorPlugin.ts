@@ -1,16 +1,6 @@
-import {
-  ViewPlugin,
-  ViewUpdate,
-  Decoration,
-  EditorView,
-} from '@codemirror/view';
+import { ViewPlugin, ViewUpdate, Decoration, EditorView } from '@codemirror/view';
 import type { DecorationSet } from '@codemirror/view';
-import {
-  RangeSetBuilder,
-  StateEffect,
-  StateField,
-  Compartment,
-} from '@codemirror/state';
+import { RangeSetBuilder, StateEffect, StateField, Compartment } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
 import { ShikiHighlighter } from './ShikiHighlighter';
 import type { BundledLanguage, BundledTheme } from 'shiki';
@@ -133,11 +123,7 @@ class ShikiEditorView {
     try {
       // Get tokenized lines from Shiki (syntax highlighting only, no TwoSlash)
       // This is much faster than TwoSlash analysis
-      const lines = await this.highlighter.tokenize(
-        content,
-        this.language,
-        this.theme,
-      );
+      const lines = await this.highlighter.tokenize(content, this.language, this.theme);
 
       // Extract theme colors from Shiki
       const themeColors = await this.getThemeColors();
@@ -176,7 +162,7 @@ class ShikiEditorView {
       }
 
       const newDecorations = builder.finish();
-      
+
       // Only update if decorations actually changed
       if (newDecorations !== this.decorations) {
         this.decorations = newDecorations;
@@ -280,16 +266,13 @@ function themeFromColors(colors: ThemeColors): Extension {
       borderRight: `1px solid ${colors.foreground}20 !important`,
     },
     '.cm-activeLineGutter': {
-      backgroundColor:
-        colors.lineHighlight || `${colors.foreground}10` + ' !important',
+      backgroundColor: colors.lineHighlight || `${colors.foreground}10` + ' !important',
     },
     '.cm-activeLine': {
-      backgroundColor:
-        colors.lineHighlight || `${colors.foreground}08` + ' !important',
+      backgroundColor: colors.lineHighlight || `${colors.foreground}08` + ' !important',
     },
     '.cm-selectionBackground, ::selection': {
-      backgroundColor:
-        colors.selectionBackground || `${colors.foreground}20` + ' !important',
+      backgroundColor: colors.selectionBackground || `${colors.foreground}20` + ' !important',
     },
     '.cm-cursor, .cm-cursor-primary': {
       borderLeftColor: colors.foreground + ' !important',
@@ -309,16 +292,10 @@ export const updateShikiConfig = StateEffect.define<{
   theme?: BundledTheme;
 }>();
 
-
-export function shikiEditorPlugin(
-  config: ShikiEditorPluginConfig = {},
-): Extension[] {
-  const plugin = ViewPlugin.define(
-    (view) => new ShikiEditorView(view, config),
-    {
-      decorations: (v) => v.decorations,
-    },
-  );
+export function shikiEditorPlugin(config: ShikiEditorPluginConfig = {}): Extension[] {
+  const plugin = ViewPlugin.define((view) => new ShikiEditorView(view, config), {
+    decorations: (v) => v.decorations,
+  });
 
   // Initialize with default theme colors (will be updated once highlighter loads)
   const initialTheme = themeCompartment.of(
@@ -358,10 +335,7 @@ async function createShikiEditorExtension(
 // Facet for dynamic language/theme updates
 import { Facet } from '@codemirror/state';
 
-const shikiConfig = Facet.define<
-  ShikiEditorPluginConfig,
-  ShikiEditorPluginConfig
->({
+const shikiConfig = Facet.define<ShikiEditorPluginConfig, ShikiEditorPluginConfig>({
   combine(configs) {
     return configs[configs.length - 1] || {};
   },

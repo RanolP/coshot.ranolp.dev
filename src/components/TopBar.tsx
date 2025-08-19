@@ -9,14 +9,14 @@ const TopBar: Component = () => {
 
   return (
     <>
-      <div 
+      <div
         class="h-60px flex items-center px-20px flex-shrink-0"
         style={{
-          'background-color': colors()?.['titleBar.activeBackground'] || 'var(--theme-titleBar-activeBackground)',
-          'border-bottom': `1px solid ${colors()?.['titleBar.border'] || 'var(--theme-titleBar-border)'}`
+          'background-color':
+            colors()?.['titleBar.activeBackground'] || 'var(--theme-titleBar-activeBackground)',
+          'border-bottom': `1px solid ${colors()?.['titleBar.border'] || 'var(--theme-titleBar-border)'}`,
         }}
-      >
-      </div>
+      ></div>
       <FeaturesModal isOpen={showModal()} onClose={() => setShowModal(false)} />
     </>
   );
