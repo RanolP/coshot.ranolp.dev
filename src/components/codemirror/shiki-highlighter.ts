@@ -7,7 +7,7 @@ import {
 } from 'shiki';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { TwoslashCdnReturn } from 'twoslash-cdn';
-import { getThemeColors, type ThemeColors } from '../../utils/themeColors';
+import { getThemeColors, type ThemeColors } from '../../utils/theme-colors';
 
 interface ShikiHighlighterOptions {
   themes?: BundledTheme[];

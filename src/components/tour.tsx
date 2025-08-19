@@ -1,6 +1,6 @@
 import type { Component } from 'solid-js';
 import { createSignal, Show, createEffect, onCleanup } from 'solid-js';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 
 interface TourStep {
   target?: string;

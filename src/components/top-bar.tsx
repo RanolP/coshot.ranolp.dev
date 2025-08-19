@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 import { createSignal } from 'solid-js';
-import FeaturesModal from './FeaturesModal';
-import { useTheme } from '../contexts/ThemeContext';
+import FeaturesModal from './features-modal';
+import { useTheme } from '../contexts/theme-context';
 
 const TopBar: Component = () => {
   const [showModal, setShowModal] = createSignal(false);

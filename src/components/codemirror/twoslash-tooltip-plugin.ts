@@ -9,12 +9,12 @@ import {
 import type { DecorationSet, Tooltip } from '@codemirror/view';
 import { StateField, StateEffect, RangeSetBuilder, EditorState } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
-import { ShikiHighlighter } from './ShikiHighlighter';
-import { updateShikiConfig } from './ShikiEditorPlugin';
+import { ShikiHighlighter } from './shiki-highlighter';
+import { updateShikiConfig } from './shiki-editor-plugin';
 import type { NodeHover, NodeCompletion, NodeError, NodeQuery } from 'twoslash';
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { BundledLanguage, BundledTheme } from 'shiki';
-import { getThemeColors } from '../../utils/themeColors';
+import { getThemeColors } from '../../utils/theme-colors';
 
 interface TwoslashTooltipConfig {
   highlighter?: ShikiHighlighter;

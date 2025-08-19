@@ -3,7 +3,7 @@ import { For, createSignal, createEffect, onCleanup } from 'solid-js';
 import { Combobox, useListCollection } from '@ark-ui/solid/combobox';
 import { useFilter } from '@ark-ui/solid/locale';
 import type { BundledTheme } from 'shiki';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 
 interface ThemeOption {
   value: BundledTheme;

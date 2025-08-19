@@ -2,7 +2,7 @@ import { ViewPlugin, ViewUpdate, Decoration, EditorView } from '@codemirror/view
 import type { DecorationSet } from '@codemirror/view';
 import { RangeSetBuilder, StateEffect, StateField, Compartment } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
-import { ShikiHighlighter } from './ShikiHighlighter';
+import { ShikiHighlighter } from './shiki-highlighter';
 import type { BundledLanguage, BundledTheme } from 'shiki';
 
 interface ShikiEditorPluginConfig {

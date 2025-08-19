@@ -30,17 +30,17 @@ import {
   rectangularSelection,
 } from '@codemirror/view';
 import type { BundledLanguage, BundledTheme } from 'shiki';
-import { shikiEditorPlugin, updateShikiConfig } from './ShikiEditorPlugin';
-import SearchableThemeSelector from '../SearchableThemeSelector';
-import SearchableLanguageSelector from '../SearchableLanguageSelector';
-import TwoslashToggle from '../TwoslashToggle';
+import { shikiEditorPlugin, updateShikiConfig } from './shiki-editor-plugin';
+import SearchableThemeSelector from '../searchable-theme-selector';
+import SearchableLanguageSelector from '../searchable-language-selector';
+import TwoslashToggle from '../twoslash-toggle';
 import {
   twoslashTooltipPlugin,
   clearTwoslashData,
   enableTwoslashData,
-} from './TwoslashTooltipPlugin';
-import { ShikiHighlighter } from './ShikiHighlighter';
-import { languageDisplayNames } from '../../utils/languageNames';
+} from './twoslash-tooltip-plugin';
+import { ShikiHighlighter } from './shiki-highlighter';
+import { languageDisplayNames } from '../../utils/language-names';
 
 // All available Shiki themes
 const AVAILABLE_THEMES: BundledTheme[] = [

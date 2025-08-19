@@ -1,9 +1,9 @@
 import { createSignal, Show, type Component, onMount, createEffect, For } from 'solid-js';
 import html2canvas from 'html2canvas';
-import { useTheme } from '../contexts/ThemeContext';
-import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
+import { useTheme } from '../contexts/theme-context';
+import { ShikiHighlighter } from './codemirror/shiki-highlighter';
 import type { BundledLanguage, BundledTheme } from 'shiki';
-import Knob from './Knob';
+import Knob from './knob';
 
 interface ShareModalProps {
   isOpen: boolean;

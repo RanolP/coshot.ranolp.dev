@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 import { createMemo, createSignal, Show } from 'solid-js';
 import { Tooltip } from '@ark-ui/solid';
-import { getLanguageDisplayName } from '../utils/languageNames';
+import { getLanguageDisplayName } from '../utils/language-names';
 
 interface TwoslashToggleProps {
   enabled: boolean;

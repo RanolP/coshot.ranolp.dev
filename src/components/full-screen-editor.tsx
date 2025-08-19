@@ -1,13 +1,13 @@
 import type { Component } from 'solid-js';
 import { createSignal, createEffect, onMount, onCleanup } from 'solid-js';
 import type { BundledTheme } from 'shiki';
-import ShikiCodeMirrorWidget from './codemirror/ShikiCodeMirrorWidget';
-import { ShikiHighlighter } from './codemirror/ShikiHighlighter';
-import { useTheme } from '../contexts/ThemeContext';
-import TwoslashToggle from './TwoslashToggle';
-import { languageDisplayNames } from '../utils/languageNames';
-import ShareModal from './ShareModal';
-import FeaturesModal from './FeaturesModal';
+import ShikiCodeMirrorWidget from './codemirror/shiki-code-mirror-widget';
+import { ShikiHighlighter } from './codemirror/shiki-highlighter';
+import { useTheme } from '../contexts/theme-context';
+import TwoslashToggle from './twoslash-toggle';
+import { languageDisplayNames } from '../utils/language-names';
+import ShareModal from './share-modal';
+import FeaturesModal from './features-modal';
 
 const FullScreenEditor: Component = () => {
   const { theme, setTheme, colors } = useTheme();

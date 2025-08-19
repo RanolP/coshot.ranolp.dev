@@ -1,6 +1,6 @@
-import TopBar from './components/TopBar';
-import FullScreenEditor from './components/FullScreenEditor';
-import { ThemeProvider } from './contexts/ThemeContext';
+import TopBar from './components/top-bar';
+import FullScreenEditor from './components/full-screen-editor';
+import { ThemeProvider } from './contexts/theme-context';
 
 function App() {
   return (
