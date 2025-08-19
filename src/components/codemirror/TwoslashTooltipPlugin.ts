@@ -30,6 +30,13 @@ interface TwoslashData {
   completions: Map<number, NodeCompletion[]>;
 }
 
+// Global state for tracking typing activity across all tooltips
+const globalTypingState = {
+  isTyping: false,
+  typingTimeout: null as number | null,
+  lastEditTime: Date.now(),
+};
+
 // State effect for updating TwoSlash data
 const setTwoslashData = StateEffect.define<TwoslashData>();
 
@@ -174,12 +181,15 @@ const createQueryTooltipsField = (
                   if (container._observer) {
                     container._observer.disconnect();
                   }
-                  if (container._editor && container._keyHandler) {
-                    container._editor.removeEventListener('keydown', container._keyHandler);
+                  if (container._editor) {
+                    if (container._keyHandler) {
+                      container._editor.removeEventListener('keydown', container._keyHandler);
+                    }
+                    if (container._inputHandler) {
+                      container._editor.removeEventListener('input', container._inputHandler);
+                    }
                   }
-                  if (container._typingTimeout) {
-                    clearTimeout(container._typingTimeout);
-                  }
+                  // Don't clear global typing timeout as it's shared across tooltips
                 }
               };
             },
@@ -206,7 +216,7 @@ function createQueryTooltipDOM(
   highlighter?: ShikiHighlighter,
   _language?: BundledLanguage,
   theme?: BundledTheme,
-  editorState?: EditorState,
+  _editorState?: EditorState,
 ): HTMLElement {
   // Determine colors based on theme
   let bgColor = '#ffffff';
@@ -259,48 +269,58 @@ function createQueryTooltipDOM(
     transition: opacity 0.2s ease-in-out;
   `;
   
-  // Track typing activity
-  let typingTimeout: number | null = null;
-  let isTyping = false;
+  const SHOW_DELAY = 3000; // Show tooltip 3 seconds after last edit
   
-  // Set opacity based on focus and typing state
+  // Set opacity based on focus and typing state using global state
   const updateOpacity = () => {
     const editorElement = document.querySelector('.cm-editor.cm-focused');
     if (!editorElement) {
       // Editor not focused, show tooltip fully
       container.style.opacity = '1';
-    } else if (isTyping) {
+    } else if (globalTypingState.isTyping) {
       // Editor focused and typing, hide completely
       container.style.opacity = '0';
+      container.style.pointerEvents = 'none';
     } else {
       // Editor focused but not typing, show semi-transparent
       container.style.opacity = '0.45';
+      container.style.pointerEvents = 'none';
     }
   };
   
-  // Handle keyboard activity
-  const handleKeyboard = () => {
+  // Handle keyboard activity with proper debouncing - resets timer on EVERY keystroke
+  const handleKeyboard = (event: Event) => {
     const editorElement = document.querySelector('.cm-editor.cm-focused');
     if (!editorElement) return;
     
-    // Mark as typing and hide tooltip
-    isTyping = true;
-    updateOpacity();
-    
-    // Clear existing timeout
-    if (typingTimeout !== null) {
-      clearTimeout(typingTimeout);
+    // ANY keystroke hides the tooltip and resets the timer
+    if (event instanceof KeyboardEvent) {
+      // Hide tooltip immediately on any key press
+      globalTypingState.isTyping = true;
+      globalTypingState.lastEditTime = Date.now();
+      
+      // Update all query tooltips
+      document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
+        (el as HTMLElement).style.opacity = '0';
+      });
+      
+      // ALWAYS clear and reset the timeout on EVERY keystroke
+      if (globalTypingState.typingTimeout !== null) {
+        clearTimeout(globalTypingState.typingTimeout);
+      }
+      
+      // Start a fresh 3-second timer
+      globalTypingState.typingTimeout = window.setTimeout(() => {
+        globalTypingState.isTyping = false;
+        globalTypingState.typingTimeout = null;
+        
+        // Update all query tooltips
+        document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
+          const editorEl = document.querySelector('.cm-editor.cm-focused');
+          (el as HTMLElement).style.opacity = editorEl ? '0.45' : '1';
+        });
+      }, SHOW_DELAY);
     }
-    
-    // Set timeout to show tooltip again after 3 seconds of inactivity
-    typingTimeout = window.setTimeout(() => {
-      isTyping = false;
-      updateOpacity();
-      typingTimeout = null;
-    }, 3000);
-    
-    // Store timeout reference for cleanup
-    (container as any)._typingTimeout = typingTimeout;
   };
   
   // Set initial opacity
@@ -310,10 +330,10 @@ function createQueryTooltipDOM(
   const observer = new MutationObserver(() => {
     // Reset typing state when focus changes
     if (!document.querySelector('.cm-editor.cm-focused')) {
-      isTyping = false;
-      if (typingTimeout !== null) {
-        clearTimeout(typingTimeout);
-        typingTimeout = null;
+      globalTypingState.isTyping = false;
+      if (globalTypingState.typingTimeout !== null) {
+        clearTimeout(globalTypingState.typingTimeout);
+        globalTypingState.typingTimeout = null;
       }
     }
     updateOpacity();
@@ -332,9 +352,40 @@ function createQueryTooltipDOM(
       // Add keyboard event listener to detect typing
       editor.addEventListener('keydown', handleKeyboard);
       
+      // Add input event listener to catch paste, cut, and other input events
+      const handleInput = () => {
+        globalTypingState.isTyping = true;
+        globalTypingState.lastEditTime = Date.now();
+        
+        // Update all query tooltips
+        document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
+          (el as HTMLElement).style.opacity = '0';
+        });
+        
+        // ALWAYS clear and reset the timeout on every input event
+        if (globalTypingState.typingTimeout !== null) {
+          clearTimeout(globalTypingState.typingTimeout);
+        }
+        
+        // Start a fresh 3-second timer
+        globalTypingState.typingTimeout = window.setTimeout(() => {
+          globalTypingState.isTyping = false;
+          globalTypingState.typingTimeout = null;
+          
+          // Update all query tooltips
+          document.querySelectorAll('.cm-twoslash-query-tooltip').forEach((el) => {
+            const editorEl = document.querySelector('.cm-editor.cm-focused');
+            (el as HTMLElement).style.opacity = editorEl ? '0.45' : '1';
+          });
+        }, SHOW_DELAY);
+      };
+      
+      editor.addEventListener('input', handleInput);
+      
       // Store references for cleanup
       (container as any)._observer = observer;
       (container as any)._keyHandler = handleKeyboard;
+      (container as any)._inputHandler = handleInput;
       (container as any)._editor = editor;
     }
   }, 0);
