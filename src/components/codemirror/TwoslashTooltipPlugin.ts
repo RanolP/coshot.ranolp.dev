@@ -158,15 +158,29 @@ const createQueryTooltipsField = (
             strictSide: true,
             arrow: true,
             create: () => {
+              const dom = createQueryTooltipDOM(
+                query.text || '',
+                query.docs,
+                highlighter,
+                language,
+                currentTheme,
+                tr.state,
+              );
               return {
-                dom: createQueryTooltipDOM(
-                  query.text || '',
-                  query.docs,
-                  highlighter,
-                  language,
-                  currentTheme,
-                  tr.state,
-                ),
+                dom,
+                destroy: () => {
+                  // Clean up event listeners and observers
+                  const container = dom as any;
+                  if (container._observer) {
+                    container._observer.disconnect();
+                  }
+                  if (container._editor && container._keyHandler) {
+                    container._editor.removeEventListener('keydown', container._keyHandler);
+                  }
+                  if (container._typingTimeout) {
+                    clearTimeout(container._typingTimeout);
+                  }
+                }
               };
             },
           };
@@ -235,7 +249,6 @@ function createQueryTooltipDOM(
     font-size: 12px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     width: max-content;
-    min-width: 200px;
     max-width: 500px;
     white-space: pre-wrap;
     word-break: break-word;
@@ -246,10 +259,48 @@ function createQueryTooltipDOM(
     transition: opacity 0.2s ease-in-out;
   `;
   
-  // Set initial opacity based on focus state
+  // Track typing activity
+  let typingTimeout: number | null = null;
+  let isTyping = false;
+  
+  // Set opacity based on focus and typing state
   const updateOpacity = () => {
     const editorElement = document.querySelector('.cm-editor.cm-focused');
-    container.style.opacity = editorElement ? '0.45' : '1';
+    if (!editorElement) {
+      // Editor not focused, show tooltip fully
+      container.style.opacity = '1';
+    } else if (isTyping) {
+      // Editor focused and typing, hide completely
+      container.style.opacity = '0';
+    } else {
+      // Editor focused but not typing, show semi-transparent
+      container.style.opacity = '0.45';
+    }
+  };
+  
+  // Handle keyboard activity
+  const handleKeyboard = () => {
+    const editorElement = document.querySelector('.cm-editor.cm-focused');
+    if (!editorElement) return;
+    
+    // Mark as typing and hide tooltip
+    isTyping = true;
+    updateOpacity();
+    
+    // Clear existing timeout
+    if (typingTimeout !== null) {
+      clearTimeout(typingTimeout);
+    }
+    
+    // Set timeout to show tooltip again after 3 seconds of inactivity
+    typingTimeout = window.setTimeout(() => {
+      isTyping = false;
+      updateOpacity();
+      typingTimeout = null;
+    }, 3000);
+    
+    // Store timeout reference for cleanup
+    (container as any)._typingTimeout = typingTimeout;
   };
   
   // Set initial opacity
@@ -257,22 +308,36 @@ function createQueryTooltipDOM(
   
   // Watch for focus changes on the editor
   const observer = new MutationObserver(() => {
+    // Reset typing state when focus changes
+    if (!document.querySelector('.cm-editor.cm-focused')) {
+      isTyping = false;
+      if (typingTimeout !== null) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+      }
+    }
     updateOpacity();
   });
   
-  // Find the editor element and observe class changes
+  // Find the editor element and set up listeners
   setTimeout(() => {
     const editor = container.closest('.cm-editor');
     if (editor) {
+      // Observe class changes for focus detection
       observer.observe(editor, {
         attributes: true,
         attributeFilter: ['class']
       });
+      
+      // Add keyboard event listener to detect typing
+      editor.addEventListener('keydown', handleKeyboard);
+      
+      // Store references for cleanup
+      (container as any)._observer = observer;
+      (container as any)._keyHandler = handleKeyboard;
+      (container as any)._editor = editor;
     }
   }, 0);
-  
-  // Store observer for cleanup
-  (container as any)._observer = observer;
 
   // Add type info
   const typeDiv = document.createElement('div');

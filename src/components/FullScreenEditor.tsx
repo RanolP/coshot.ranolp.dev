@@ -78,10 +78,10 @@ const userId = user.id;
     const handleMouseMove = (e: MouseEvent) => {
       const currentWidth = startWidth || 900;
       if (direction === 'right') {
-        setEditorWidth(Math.max(400, currentWidth + (e.clientX - startX) * 2));
+        setEditorWidth(Math.max(480, currentWidth + (e.clientX - startX) * 2));
       }
       if (direction === 'left') {
-        setEditorWidth(Math.max(400, currentWidth - (e.clientX - startX) * 2));
+        setEditorWidth(Math.max(480, currentWidth - (e.clientX - startX) * 2));
       }
     };
 
@@ -147,7 +147,7 @@ const userId = user.id;
               border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
               width: editorWidth() !== null ? `${editorWidth()}px` : 'fit-content',
               'max-width': editorWidth() === null ? '90vw' : undefined,
-              'min-width': '400px',
+              'min-width': '480px',
               'max-height': '80vh',
               height: 'auto'
             }}

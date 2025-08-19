@@ -152,6 +152,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (
       },
       '.cm-editor': {
         height: props.height || '400px',
+        minWidth: '480px',
         borderRadius: '8px',
         overflow: 'hidden',
       },
