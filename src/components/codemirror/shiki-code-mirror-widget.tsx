@@ -130,6 +130,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
   let highlighterInstance: ShikiHighlighter | undefined;
   let previousTwoslashEnabled = false;
   let themeCompartment: Compartment | undefined;
+  let tempHighlighter: ShikiHighlighter | undefined;
   const [editorView, setEditorView] = createSignal<EditorView | undefined>(undefined);
   const [isReady, setIsReady] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(true);
@@ -140,9 +141,9 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
     selection?: string;
     activeLineHighlight?: string;
   }>({
-    bg: '#ffffff',
-    fg: '#000000',
-    border: '#e1e4e8',
+    bg: '#1e1e1e',
+    fg: '#d4d4d4',
+    border: '#464647',
   });
 
   const updateThemeColors = () => {
@@ -251,9 +252,11 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
         themes: AVAILABLE_THEMES,
         langs: ['javascript', 'typescript', 'tsx', 'jsx', 'css', 'html'],
       });
+      
+      // Initialize highlighter and get theme colors early for loading state
       await highlighterInstance.initialize();
 
-      // Update theme colors after initialization
+      // Update theme colors immediately after initialization for loading state
       updateThemeColors();
 
       // Create theme compartment for dynamic updates
@@ -340,7 +343,24 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
     }
   };
 
-  onMount(() => {
+  onMount(async () => {
+    // Try to get theme colors early for loading state
+    try {
+      tempHighlighter = new ShikiHighlighter({
+        themes: [props.theme || 'github-light'],
+        langs: ['javascript'], // Minimal lang for faster init
+      });
+      await tempHighlighter.initialize();
+      
+      if (props.theme) {
+        const colors = tempHighlighter.getBasicThemeColors(props.theme);
+        setThemeColors(colors);
+      }
+    } catch (error) {
+      console.warn('Failed to get early theme colors:', error);
+    }
+    
+    // Now create the actual editor
     createEditor();
   });
 
@@ -351,6 +371,9 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
     }
     if (highlighterInstance) {
       await highlighterInstance.dispose();
+    }
+    if (tempHighlighter) {
+      await tempHighlighter.dispose();
     }
   });
 
