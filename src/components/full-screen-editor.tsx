@@ -102,7 +102,7 @@ const userId = user.id;
 
   return (
     <div
-      class="flex-1 flex flex-col overflow-hidden"
+      class="flex-1 flex flex-col"
       style={{
         'background-color': colors()?.['editor.background'] || 'var(--theme-editor-background)',
       }}
@@ -117,9 +117,10 @@ const userId = user.id;
       ></div>
 
       <div
-        class="flex-1 flex flex-col items-center justify-center overflow-hidden p-20px"
+        class="flex-1 flex flex-col items-center justify-center p-20px"
         style={{
           'background-color': colors()?.['editor.background'] || 'var(--theme-editor-background)',
+          overflow: 'visible',
         }}
       >
         {/* Container for button and editor */}
@@ -189,8 +190,9 @@ const userId = user.id;
 
           <div
             ref={resizableRef}
-            class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden"
+            class="relative rounded-12px shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col"
             style={{
+              overflow: 'visible',
               'background-color': colors()?.['panel.background'] || 'var(--theme-panel-background)',
               border: `1px solid ${colors()?.['panel.border'] || 'var(--theme-panel-border)'}`,
               width: editorWidth() !== null ? `${editorWidth()}px` : 'fit-content',
@@ -200,7 +202,7 @@ const userId = user.id;
               height: 'auto',
             }}
           >
-            <div class="flex-1 overflow-hidden flex flex-col rounded-12px editor-container">
+            <div class="flex-1 flex flex-col rounded-12px editor-container" style={{ overflow: 'visible' }}>
               <ShikiCodeMirrorWidget
                 value={code()}
                 language={language() as any}

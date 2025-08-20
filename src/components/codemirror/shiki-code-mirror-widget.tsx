@@ -167,7 +167,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
         height: props.height || '400px',
         minWidth: '480px',
         borderRadius: '8px',
-        overflow: 'hidden',
+        overflow: 'visible',
       },
       '.cm-scroller': {
         fontFamily:
@@ -202,6 +202,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
         border: `1px solid ${colors.border}`,
         borderRadius: '6px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        zIndex: '10000 !important',
       },
       '.cm-tooltip.cm-tooltip-autocomplete': {
         '& > ul': {
@@ -507,7 +508,7 @@ const ShikiCodeMirrorWidget: Component<ShikiCodeMirrorWidgetProps> = (props) => 
         style={{
           flex: '1',
           'border-radius': '8px',
-          overflow: 'hidden',
+          overflow: 'visible',
           opacity: isLoading() ? '0.3' : '1',
           filter: isLoading() ? 'blur(2px)' : 'none',
           transition: 'opacity 0.3s ease, filter 0.3s ease',
