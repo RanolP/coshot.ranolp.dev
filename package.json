@@ -25,10 +25,12 @@
     "@shikijs/twoslash": "^3.9.2",
     "codemirror": "^6.0.2",
     "html2canvas": "^1.4.1",
+    "idb-keyval": "^6.2.2",
     "micromark": "^4.0.2",
     "shiki": "^3.9.2",
     "solid-js": "^1.9.8",
-    "twoslash-cdn": "^0.3.4"
+    "twoslash-cdn": "^0.3.4",
+    "unstorage": "^1.16.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

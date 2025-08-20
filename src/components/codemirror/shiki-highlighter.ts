@@ -8,6 +8,8 @@ import {
 import type { TwoslashShikiReturn } from '@shikijs/twoslash';
 import type { TwoslashCdnReturn } from 'twoslash-cdn';
 import { getThemeColors, type ThemeColors } from '../../utils/theme-colors';
+import { createStorage } from 'unstorage';
+import indexedDbDriver from 'unstorage/drivers/indexedb';
 
 interface ShikiHighlighterOptions {
   themes?: BundledTheme[];
@@ -60,7 +62,16 @@ export class ShikiHighlighter {
     // Dynamically import twoslash-cdn for client-side usage
     const { createTwoslashFromCDN } = await import('twoslash-cdn');
 
+    // Create storage with IndexedDB driver for persistent caching
+    const storage = createStorage({
+      driver: indexedDbDriver({
+        dbName: 'twoslash-cdn-cache',
+        storeName: 'vfs', // Virtual file system cache
+      }),
+    });
+
     this.twoslashInstance = createTwoslashFromCDN({
+      storage, // Use persistent storage for caching TypeScript files
       compilerOptions: {
         lib: ['ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', 'ES2021', 'ESNext', 'DOM', 'DOM.Iterable'],
         target: 99, // ESNext
@@ -192,7 +203,7 @@ export class ShikiHighlighter {
               ? 'jsx'
               : 'ts';
 
-    // First prepare types
+    // First prepare types (twoslash-cdn will use the storage we provided)
     await this.twoslashInstance.prepareTypes(code);
 
     // Then run synchronously which might handle errors better
